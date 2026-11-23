@@ -1,0 +1,33 @@
+# Wedding Seating Planner — Portainer stack for a Synology NAS
+# Uses the official Node.js image directly, so there is nothing to build:
+# the app files are read from a NAS folder, the plans are written to another.
+#
+# Before deploying, copy wedding-planner.html and server.js into the "app" folder below
+# (see SERVER-SETUP.md). Adjust the /volume1/... paths if your shared folder lives elsewhere.
+
+services:
+  wedding-planner:
+    image: node:22-alpine
+    container_name: wedding-planner
+    restart: unless-stopped
+    init: true
+    working_dir: /app
+    command: ["node", "server.js"]
+    environment:
+      - PORT=8080
+      - DATA_DIR=/data
+      - TZ=Europe/Budapest
+      # Optional login — uncomment both lines to require a username/password
+      # (do this before exposing the planner outside your home network):
+      # - AUTH_USER=wedding
+      # - AUTH_PASS=change-me-to-something-long
+    ports:
+      - "8095:8080"            # open http://<nas-ip>:8095 — change 8095 if that port is taken
+    volumes:
+      - /volume1/docker/wedding-planner/app:/app:ro
+      - /volume1/docker/wedding-planner/data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

@@ -1,0 +1,2019 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wedding Seating Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f1ea; --panel:#fffdfa; --ink:#2f2a26; --muted:#8a8078; --line:#e7ded3;
+  --accent:#9c7a4b; --accent-ink:#fff; --accent-soft:#f3eadc; --sage:#6f8a6e; --sage-soft:#e8efe6;
+  --danger:#b5524a; --danger-soft:#f7e4e1; --warn:#b7802f;
+  --serif:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --sans:system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --radius:10px; --shadow:0 1px 2px rgba(60,40,20,.06), 0 4px 16px rgba(60,40,20,.07);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.4 var(--sans);display:flex;flex-direction:column;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 11px;transition:background .12s,border-color .12s}
+button:hover{border-color:#cdbfae;background:#fdf9f3}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.primary:hover{background:#8a6a3e}
+button.sage{background:var(--sage);border-color:var(--sage);color:#fff}
+button.sage:hover{background:#5f7a5e}
+button.ghost{background:transparent;border-color:transparent}
+button.ghost:hover{background:var(--accent-soft)}
+button.danger{color:var(--danger)}
+button.danger:hover{background:var(--danger-soft);border-color:#e6bfb9}
+button.icon{padding:2px 7px;line-height:1.2;background:transparent;border-color:transparent;color:var(--muted)}
+button.icon:hover{background:var(--accent-soft);color:var(--ink)}
+input,select,textarea{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 9px;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid #e2cfae;border-color:var(--accent)}
+input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;padding:0}
+label.field{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+label.field>input,label.field>select,label.field>textarea{color:var(--ink);font-size:14px}
+label.check{display:flex;align-items:center;gap:7px;cursor:pointer}
+.row{display:flex;gap:8px;align-items:center}
+.row>.grow{flex:1}
+.wrap{flex-wrap:wrap}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:8px}
+h3{font-family:var(--serif);font-size:22px;font-weight:600;margin:0}
+h4{margin:6px 0 2px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{font-family:var(--serif);font-size:30px;color:var(--accent);line-height:1}
+.title-input{font-family:var(--serif);font-size:24px;font-weight:600;border:1px solid transparent;background:transparent;padding:0 6px;width:280px;max-width:52vw}
+.title-input:hover{border-color:var(--line)}
+.sub{font-size:12px;color:var(--muted);padding-left:7px}
+.sub .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px;background:var(--sage)}
+.sub.dirty .dot{background:var(--warn)}
+.stats{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.stat{background:var(--bg);border-radius:8px;padding:4px 10px;text-align:center;min-width:64px}
+.stat b{display:block;font-size:16px;line-height:1.2}
+.stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.stat.warn b{color:var(--warn)}
+.actions{display:flex;gap:6px}
+
+/* layout */
+main{flex:1;display:flex;min-height:0}
+#sidebar{width:370px;flex:none;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#sidebar.drop-unassign{outline:3px dashed var(--sage);outline-offset:-6px}
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px}
+.tabs button{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;padding:10px 12px;color:var(--muted);font-weight:500}
+.tabs button.active{color:var(--ink);border-bottom-color:var(--accent)}
+.tabpane{flex:1;overflow:auto;padding:12px;display:none;flex-direction:column;gap:10px}
+.tabpane.active{display:flex}
+
+/* guests */
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.filters input{grid-column:1/-1}
+.listhead{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding:0 4px}
+.bulk{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--accent-soft);border-radius:8px;padding:7px 9px;font-size:13px}
+.bulk select{padding:3px 6px}
+.guest{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 8px;border:1px solid transparent;border-radius:8px;cursor:grab;user-select:none}
+.guest:hover{background:#fbf6ef;border-color:var(--line)}
+.guest.checked{background:var(--accent-soft)}
+.guest.dragging{opacity:.4}
+.gdot{width:10px;height:10px;border-radius:50%;flex:none}
+.gmain{flex:1;min-width:0}
+.gname{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gmeta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:11px;padding:2px 7px;border-radius:20px;white-space:nowrap;flex:none;border:none;cursor:default}
+.badge.free{background:#f5ebe0;color:var(--warn)}
+.badge.seated{background:var(--sage-soft);color:#4b6a4a;cursor:pointer}
+.empty{text-align:center;padding:24px 12px;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
+.empty .big{font-family:var(--serif);font-size:22px;color:var(--ink)}
+textarea{resize:vertical}
+
+/* tables tab */
+.trow{display:grid;grid-template-columns:1fr 90px 44px;gap:10px;align-items:center;padding:8px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.trow:hover{background:#fbf6ef;border-color:var(--line)}
+.trow.sel{background:var(--accent-soft);border-color:#e6d5bb}
+.bar{height:6px;background:#eee5d9;border-radius:4px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--sage)}
+.bar.full span{background:var(--accent)}
+.tnum{font-size:12px;color:var(--muted);text-align:right}
+.limit{font-size:12px;color:var(--muted)}
+.limit.hit{color:var(--danger);font-weight:600}
+
+/* plan */
+#planWrap{flex:1;position:relative;min-width:0;background:#efe8de}
+#plan{width:100%;height:100%;display:block;touch-action:none;cursor:default}
+#plan.panning{cursor:grabbing}
+.plan-toolbar{position:absolute;top:12px;left:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:rgba(255,253,250,.94);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:var(--shadow);max-width:calc(100% - 24px)}
+.plan-toolbar .sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.plan-toolbar select{padding:5px 6px}
+.plan-toolbar label.check{font-size:13px;padding:0 4px}
+#inspector{position:absolute;top:12px;right:12px;width:300px;max-height:calc(100% - 24px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px;display:none;flex-direction:column;gap:9px}
+#inspector.show{display:flex}
+#inspector.drop{outline:3px dashed var(--sage);outline-offset:-4px}
+.insp-head{display:flex;align-items:center;justify-content:space-between}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.srow{display:flex;align-items:center;gap:7px;padding:3px 4px;border-radius:6px;font-size:13px}
+.srow[draggable=true]{cursor:grab}
+.srow:hover{background:#fbf6ef}
+.srow .sn{width:24px;color:var(--muted);font-size:11px;text-align:right;flex:none}
+.srow .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow select{flex:1;padding:2px 5px;font-size:12px;color:var(--muted)}
+#legend{position:absolute;left:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:4px 10px;max-width:60%;background:rgba(255,253,250,.9);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12px}
+#legend:empty{display:none}
+#legend span{display:inline-flex;align-items:center;gap:5px}
+#legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.hint{position:absolute;right:12px;bottom:12px;font-size:12px;color:var(--muted);background:rgba(255,253,250,.85);padding:4px 9px;border-radius:8px}
+#planEmpty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none}
+#planEmpty.show{display:flex}
+#planEmpty .card{pointer-events:auto;align-items:center;text-align:center;max-width:340px;box-shadow:var(--shadow);padding:22px}
+
+/* svg */
+.floor{fill:#fffdf9}
+.grid{stroke:#efe6da;stroke-width:.02;fill:none}
+.walls{fill:none;stroke:#b4a389;stroke-width:.1}
+.dim{font-size:.36px;fill:#9a8d7e;text-anchor:middle;dominant-baseline:central;font-family:var(--sans)}
+.tbl{cursor:move}
+.tbl .top{fill:#fff;stroke:#c9b79c;stroke-width:.05;filter:url(#shadow)}
+.tbl.sel .top{stroke:var(--accent);stroke-width:.1}
+.tbl.drop .top{stroke:var(--sage);stroke-width:.14;fill:#f1f6ef}
+.tbl .tl{font-family:var(--serif);font-weight:700;text-anchor:middle;fill:var(--ink);pointer-events:none}
+.tbl .tc{text-anchor:middle;fill:var(--muted);pointer-events:none;font-family:var(--sans)}
+.tbl.full .tc{fill:var(--sage);font-weight:600}
+.seat{fill:#efe7dc;stroke:#cdbfae;stroke-width:.03}
+.seat.on{stroke:#fff;stroke-width:.05;cursor:grab}
+.gn{font-size:.2px;font-family:var(--sans);fill:#4a423b;paint-order:stroke;stroke:#fffdf9;stroke-width:.07px;stroke-linejoin:round;pointer-events:none}
+.item{cursor:move}
+.item rect{stroke-width:.05}
+.item.sel rect{stroke:var(--accent)!important;stroke-width:.1}
+.item text{text-anchor:middle;dominant-baseline:central;fill:#6f655c;font-family:var(--serif);font-weight:600;pointer-events:none}
+
+/* ghost / toasts / dialogs */
+#ghost{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:#fff;padding:4px 10px;border-radius:20px;font-size:13px;display:none;transform:translate(12px,10px);box-shadow:var(--shadow)}
+#toasts{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;z-index:60;pointer-events:none}
+.toast{background:var(--ink);color:#fff;padding:8px 14px;border-radius:9px;box-shadow:var(--shadow);transition:opacity .3s,transform .3s;max-width:90vw}
+.toast.warn{background:#8a5d1c}.toast.err{background:var(--danger)}.toast.ok{background:#4f6e4e}
+.toast.out{opacity:0;transform:translateY(6px)}
+dialog{border:none;border-radius:14px;padding:0;box-shadow:0 20px 60px rgba(40,25,10,.3);max-width:min(560px,94vw);width:100%;color:var(--ink);background:var(--panel)}
+dialog::backdrop{background:rgba(47,42,38,.35)}
+.dlg{padding:18px;display:flex;flex-direction:column;gap:12px}
+.dlg menu{display:flex;justify-content:flex-end;gap:8px;margin:4px 0 0;padding:0}
+.saverow{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:9px}
+.saverow.current{border-color:var(--accent);background:var(--accent-soft)}
+.saverow>div{flex:1;min-width:0}
+#saveList{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}
+.preview{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.preview table{border-collapse:collapse;width:100%;font-size:12px}
+.preview td,.preview th{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left}
+.preview th{background:var(--bg);position:sticky;top:0}
+hr{border:none;border-top:1px solid var(--line);margin:2px 0}
+.danger-zone{border-color:#ecc9c3}
+
+#printView{display:none}
+@media print{
+  body{display:block;overflow:visible;background:#fff}
+  body>*:not(#printView){display:none!important}
+  #printView{display:block;font-family:var(--sans);color:#000}
+  #printView h1{font-family:var(--serif);font-size:30px;margin:0 0 4px}
+  #printView svg{width:100%;height:auto;max-height:24cm;border:1px solid #ddd;margin:8px 0 16px}
+  #printView .tbl .top{filter:none}
+  .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;page-break-before:always}
+  .pcard{border:1px solid #ccc;border-radius:6px;padding:8px;break-inside:avoid;font-size:12px}
+  .pcard b{font-family:var(--serif);font-size:16px}
+  .pindex{columns:3;font-size:11px;page-break-before:always}
+  .pindex div{break-inside:avoid}
+}
+@media (max-width:820px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  #sidebar{width:100%;max-height:48vh;border-right:none;border-bottom:1px solid var(--line)}
+  #planWrap{min-height:70vh}
+  #inspector{width:auto;left:12px;top:auto;bottom:12px;max-height:55%}
+  .stats{margin-left:0}
+  .hint{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">❦</span>
+    <div>
+      <input id="weddingName" class="title-input" title="Click to rename" maxlength="80">
+      <div class="sub" id="saveStatus"></div>
+    </div>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="actions">
+    <button id="btnUndo" title="Undo (Ctrl+Z)">↶ Undo</button>
+    <button id="btnRedo" title="Redo (Ctrl+Y)">↷</button>
+    <button id="btnSaves" class="primary" title="Save / load configurations (Ctrl+S quick-saves)">Save / Load</button>
+    <button id="btnPrint" title="Print floor plan and seating lists">Print</button>
+  </div>
+</header>
+
+<main>
+  <aside id="sidebar">
+    <nav class="tabs">
+      <button data-tab="guests" class="active">Guests</button>
+      <button data-tab="tables">Tables</button>
+      <button data-tab="settings">Settings</button>
+    </nav>
+
+    <!-- GUESTS -->
+    <section class="tabpane active" id="tab-guests">
+      <form id="addGuestForm" class="card" autocomplete="off">
+        <div class="row">
+          <input id="gName" class="grow" placeholder="Guest name" required>
+          <button class="primary" type="submit">Add</button>
+        </div>
+        <div class="row">
+          <input id="gGroup" class="grow" list="groupList" placeholder="Group (e.g. Bride's family)">
+          <input id="gDiet" class="grow" list="dietList" placeholder="Dietary">
+        </div>
+      </form>
+      <div class="row wrap">
+        <button id="btnPaste" type="button">Paste list…</button>
+        <button id="btnImportFile" type="button" title="CSV, TXT, TSV, Excel (.xlsx) or JSON">Import file…</button>
+        <input type="file" id="fileGuests" accept=".csv,.txt,.tsv,.xlsx,.xls,.json" hidden>
+      </div>
+      <div id="pasteBox" class="card" hidden>
+        <div class="small muted">One guest per line. Optional extra columns separated by comma/semicolon/tab:<br><code>Name, Group, Dietary, Notes</code></div>
+        <textarea id="pasteText" rows="6" placeholder="Anna Smith, Bride's family&#10;John Doe, Work, Vegetarian&#10;…"></textarea>
+        <div class="row"><button class="primary" id="btnPasteGo" type="button">Add these guests</button><button type="button" id="btnPasteCancel" class="ghost">Cancel</button></div>
+      </div>
+      <div class="filters">
+        <input id="fSearch" type="search" placeholder="Search guests…">
+        <select id="fGroup"></select>
+        <select id="fStatus">
+          <option value="all">Everyone</option>
+          <option value="unassigned">Not seated</option>
+          <option value="seated">Seated</option>
+        </select>
+      </div>
+      <div id="bulkBar"></div>
+      <div class="listhead">
+        <input type="checkbox" id="chkAll" title="Select all shown">
+        <span id="guestCount" class="grow"></span>
+        <select id="fSort" title="Sort">
+          <option value="added">Added order</option>
+          <option value="name">Name</option>
+          <option value="group">Group</option>
+          <option value="table">Table</option>
+        </select>
+      </div>
+      <div id="guestList"></div>
+    </section>
+
+    <!-- TABLES -->
+    <section class="tabpane" id="tab-tables">
+      <div class="card">
+        <div class="row">
+          <button class="primary" id="btnAddTable2">+ Round table</button>
+          <span id="tableLimit" class="limit"></span>
+        </div>
+        <div class="row wrap">
+          <button id="btnAutoArrange" title="Lay tables out in a tidy grid, avoiding room elements">Auto-arrange tables</button>
+          <button id="btnAutoSeat" class="sage" title="Seat all unassigned guests, keeping groups together">Auto-seat guests</button>
+        </div>
+        <div class="row wrap">
+          <button id="btnClearSeating" class="danger">Clear all seating</button>
+        </div>
+      </div>
+      <div id="tableList"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="tabpane" id="tab-settings">
+      <div class="card">
+        <h4>Event</h4>
+        <label class="field">Wedding date<input type="date" data-set="date"></label>
+      </div>
+      <div class="card">
+        <h4>Room</h4>
+        <label class="field">Shape
+          <select data-set="shape">
+            <option value="rect">Rectangle</option>
+            <option value="T">T-shape</option>
+          </select>
+        </label>
+        <div class="grid2">
+          <label class="field"><span id="lblW">Width (m)</span><input type="number" min="4" max="200" step="0.5" data-set="roomW"></label>
+          <label class="field"><span id="lblH">Length (m)</span><input type="number" min="4" max="200" step="0.5" data-set="roomH"></label>
+        </div>
+        <div id="tFields" hidden>
+          <div class="grid2">
+            <label class="field" style="grid-column:1/-1">Orientation
+              <select data-set="orient">
+                <option value="up">T — wide part at the top</option>
+                <option value="down">⊥ — wide part at the bottom</option>
+                <option value="left">⊢ — wide part on the left</option>
+                <option value="right">⊣ — wide part on the right</option>
+              </select>
+            </label>
+            <label class="field">Wide part depth (m)<input type="number" min="1" max="200" step="0.5" data-set="barDepth"></label>
+            <label class="field">Narrow part width (m)<input type="number" min="1" max="200" step="0.5" data-set="stemWidth"></label>
+            <label class="field">Narrow part offset (m)<input type="number" step="0.5" data-set="stemOffset"></label>
+            <label class="field">Narrow part end
+              <select data-set="end">
+                <option value="straight">Straight wall</option>
+                <option value="round">Half circle</option>
+              </select>
+            </label>
+          </div>
+          <div class="small muted" style="margin-top:6px">The <b>wide part</b> runs the full width of the room; the <b>narrow part</b> sticks out of it. Width × length above is the overall size. Offset slides the narrow part sideways (0 = centred, negative = towards the start). “Half circle” rounds off the far end of the narrow part; its diameter is the narrow part width and it counts towards the overall length. Wall lengths are shown on the plan.</div>
+        </div>
+      </div>
+      <div class="card">
+        <h4>Tables</h4>
+        <div class="grid2">
+          <label class="field">Max table count<input type="number" min="1" max="500" step="1" data-set="maxTables"></label>
+          <label class="field">Default seats / table<input type="number" min="1" max="24" step="1" data-set="defaultSeats"></label>
+          <label class="field">Default diameter (m)<input type="number" min="0.6" max="5" step="0.1" data-set="tableDiameter"></label>
+        </div>
+        <div class="row wrap"><button id="btnApplyDefaults" type="button" title="Set every table to the default seats and diameter">Apply defaults to all tables</button></div>
+      </div>
+      <div class="card">
+        <h4>Display</h4>
+        <label class="check"><input type="checkbox" data-pref="showNames"> Show guest names on floor plan</label>
+        <label class="check"><input type="checkbox" data-pref="showGrid"> Show 1&nbsp;m grid</label>
+        <label class="check"><input type="checkbox" data-pref="snap"> Snap to 25&nbsp;cm when moving</label>
+      </div>
+      <div class="card danger-zone">
+        <h4>Danger zone</h4>
+        <div class="row wrap">
+          <button class="danger" id="btnDelAllGuests" type="button">Delete all guests</button>
+          <button class="danger" id="btnDelAllTables" type="button">Delete all tables</button>
+        </div>
+        <div class="small muted">Everything can be undone with Ctrl+Z.</div>
+      </div>
+      <div class="small muted" style="padding:0 4px" id="storageNote">Your work autosaves in this browser. Use <b>Save / Load → Export to file</b> for a backup you can keep, share or open on another computer.</div>
+    </section>
+  </aside>
+
+  <section id="planWrap">
+    <svg id="plan" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="0.04" stdDeviation="0.06" flood-color="#5a4020" flood-opacity="0.18"/>
+        </filter>
+      </defs>
+      <g id="world"></g>
+    </svg>
+    <div class="plan-toolbar">
+      <button class="primary" id="btnAddTable" title="Add a round table">+ Round table</button>
+      <select id="addItem" title="Add a room element">
+        <option value="">+ Room element…</option>
+      </select>
+      <span class="sep"></span>
+      <button id="zoomOut" title="Zoom out">−</button>
+      <button id="zoomFit" title="Fit room to screen">Fit</button>
+      <button id="zoomIn" title="Zoom in">+</button>
+      <span class="sep"></span>
+      <label class="check"><input type="checkbox" data-pref="showNames"> Names</label>
+      <label class="check"><input type="checkbox" data-pref="snap"> Snap</label>
+    </div>
+    <div id="inspector"></div>
+    <div id="legend"></div>
+    <div class="hint">Drag guests onto tables · drag empty floor to pan · scroll to zoom</div>
+    <div id="planEmpty">
+      <div class="card">
+        <div class="big" style="font-family:var(--serif);font-size:24px">Your floor plan</div>
+        <div class="muted">Add round tables, then drag guests from the list onto them.</div>
+        <div class="row"><button class="primary" id="btnEmptyAdd">+ Add a table</button><button id="btnDemo2">Load demo</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="ghost"></div>
+<div id="toasts"></div>
+<div id="printView"></div>
+
+<datalist id="groupList"></datalist>
+<datalist id="dietList">
+  <option value="Vegetarian"><option value="Vegan"><option value="Gluten-free"><option value="Lactose-free"><option value="Kids menu"><option value="Nut allergy"><option value="Halal"><option value="Kosher">
+</datalist>
+
+<!-- Edit guest -->
+<dialog id="dlgGuest">
+  <form class="dlg" method="dialog" id="guestForm" autocomplete="off">
+    <h3>Edit guest</h3>
+    <label class="field">Name<input id="eName" required></label>
+    <div class="grid2">
+      <label class="field">Group<input id="eGroup" list="groupList"></label>
+      <label class="field">Dietary<input id="eDiet" list="dietList"></label>
+    </div>
+    <label class="field">Table<select id="eTable"></select></label>
+    <label class="field">Notes<textarea id="eNotes" rows="3"></textarea></label>
+    <menu>
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="ok" class="primary">Save</button>
+    </menu>
+  </form>
+</dialog>
+
+<!-- Import preview -->
+<dialog id="dlgImport">
+  <form class="dlg" method="dialog">
+    <h3>Import guests</h3>
+    <div id="impSummary"></div>
+    <div class="preview" id="impPreview"></div>
+    <label class="check"><input type="checkbox" id="impSkipDup" checked> Skip names that are already on the list</label>
+    <menu>
+      <button value="cancel">Cancel</button>
+      <button value="ok" class="primary" id="impGo">Import</button>
+    </menu>
+  </form>
+</dialog>
+
+<!-- Save / load -->
+<dialog id="dlgSaves">
+  <div class="dlg">
+    <h3>Save &amp; load configurations</h3>
+    <div class="row">
+      <input id="saveName" class="grow" placeholder="Configuration name, e.g. “Draft 2 – final layout”">
+      <button id="btnSaveAs" class="primary">Save</button>
+    </div>
+    <div class="small muted" id="savesWhere">Saved configurations live in this browser. Export to a file to back up, share, or move to another computer.</div>
+    <div id="saveList"></div>
+    <hr>
+    <div class="row wrap">
+      <button id="btnExportJson">Export plan to file (.json)</button>
+      <button id="btnImportJson">Open plan from file…</button>
+      <input type="file" id="fileConfig" accept=".json,application/json" hidden>
+    </div>
+    <div class="row wrap">
+      <button id="btnExportCsv">Export seating list (.csv)</button>
+      <button id="btnNewPlan" class="danger">Start a new empty plan</button>
+      <button id="btnDemo">Load demo plan</button>
+    </div>
+    <menu><button id="btnCloseSaves">Close</button></menu>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+/* ================= constants & state ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const LS_CURRENT = 'weddingPlanner.current.v1';
+const LS_SAVES = 'weddingPlanner.saves.v1';
+const PALETTE = ['#7d9a7b','#c0915a','#7b8fb5','#c27a8e','#9a83bd','#5f9ea0','#c9a227','#b86b4b','#6c8f4e','#a0729e','#4f7c9c','#a88f6a'];
+const NOGROUP = '#a99f94';
+const ITEM_TYPES = {
+  dance:   {label:'Dance floor', w:6,   h:6,   fill:'#f1eaf5', stroke:'#c8b6d6'},
+  stage:   {label:'Stage / DJ',  w:5,   h:2.5, fill:'#e5ecf4', stroke:'#adbfd4'},
+  head:    {label:'Head table',  w:5,   h:1,   fill:'#fbf3e4', stroke:'#d8c193'},
+  bar:     {label:'Bar',         w:4,   h:1.2, fill:'#f4ead9', stroke:'#d3bf9b'},
+  buffet:  {label:'Buffet',      w:5,   h:1.2, fill:'#edf2e4', stroke:'#bccba4'},
+  cake:    {label:'Cake',        w:1.2, h:1.2, fill:'#f9e6ea', stroke:'#e0b4bf'},
+  gifts:   {label:'Gift table',  w:2,   h:0.9, fill:'#f6efe2', stroke:'#d9c6a4'},
+  photo:   {label:'Photo booth', w:2.5, h:2.5, fill:'#eaf0f0', stroke:'#b2c7c7'},
+  entrance:{label:'Entrance',    w:2.4, h:0.5, fill:'#ecebea', stroke:'#c0bbb6'},
+  other:   {label:'Element',     w:2,   h:2,   fill:'#f1ece5', stroke:'#cbbfae'}
+};
+
+let state;
+const ui = {
+  tab:'guests', selected:null, search:'', group:'__all', status:'all', sort:'added',
+  checked:new Set(), view:null, saveName:null, dirty:false, dragIds:null, dragSource:null
+};
+let undoStack = [], redoStack = [];
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = n => +(+n).toFixed(3);
+const snapTo = (v, s) => Math.round(v / s) * s;
+
+function defaultState(){
+  return {
+    app:'wedding-seating-planner', version:1,
+    name:'Our Wedding', date:'',
+    // default = our venue, estimated from photos: arched-window end is the wide part (top),
+    // the half-circle end with the four arches is the bottom of the narrow part
+    room:{w:17, h:18, shape:'T', t:{barDepth:6.5, stemWidth:10, stemOffset:0, orient:'up', end:'round'}},
+    settings:{maxTables:15, defaultSeats:8, tableDiameter:1.8, showNames:true, showGrid:true, snap:true},
+    guests:[], tables:[],
+    // fixed spots seen in the venue photos: head table in front of the arched window, DJ just right of it
+    items:[
+      {id:uid(), type:'head', label:'Head table', x:8.5, y:1.4, w:3, h:0.9},
+      {id:uid(), type:'stage', label:'DJ', x:12.4, y:0.9, w:1.6, h:1.2}
+    ]
+  };
+}
+
+function normalize(s){
+  const d = defaultState();
+  const incomingRoom = s && typeof s === 'object' ? s.room : null;
+  s = Object.assign(d, s && typeof s === 'object' ? s : {});
+  // plans saved before room shapes existed were plain rectangles — don't let the T default leak into them
+  if (incomingRoom && typeof incomingRoom === 'object' && !incomingRoom.shape) s.room = {...incomingRoom, shape:'rect'};
+  s.room = Object.assign(defaultState().room, s.room || {});
+  s.room.w = clamp(+s.room.w || 24, 4, 200); s.room.h = clamp(+s.room.h || 16, 4, 200);
+  s.room.shape = s.room.shape === 'T' ? 'T' : 'rect';
+  const dt = defaultState().room.t;
+  s.room.t = Object.assign({}, dt, s.room.t || {});
+  if (!['up', 'down', 'left', 'right'].includes(s.room.t.orient)) s.room.t.orient = 'up';
+  if (s.room.t.end !== 'round') s.room.t.end = 'straight';
+  s.room.t.barDepth = +s.room.t.barDepth || dt.barDepth;
+  s.room.t.stemWidth = +s.room.t.stemWidth || dt.stemWidth;
+  s.room.t.stemOffset = +s.room.t.stemOffset || 0;
+  s.settings = Object.assign(defaultState().settings, s.settings || {});
+  s.guests = Array.isArray(s.guests) ? s.guests : [];
+  s.tables = Array.isArray(s.tables) ? s.tables : [];
+  s.items = Array.isArray(s.items) ? s.items : [];
+  const seen = new Set();
+  s.guests = s.guests.filter(g => g && typeof g === 'object').map(g => {
+    let id = g.id && !seen.has(g.id) ? String(g.id) : uid(); seen.add(id);
+    return {id, name:String(g.name || '').trim() || 'Unnamed', group:String(g.group || '').trim(), diet:String(g.diet || '').trim(),
+      notes:String(g.notes || ''), tableId:g.tableId || null, seat:Number.isInteger(g.seat) ? g.seat : null};
+  });
+  s.tables = s.tables.filter(t => t && typeof t === 'object').map((t, i) => ({
+    id:String(t.id || uid()), label:String(t.label || ('Table ' + (i + 1))),
+    x:+t.x || 0, y:+t.y || 0, seats:clamp(parseInt(t.seats) || 8, 1, 24), diameter:clamp(+t.diameter || 1.8, 0.6, 5)
+  }));
+  s.items = s.items.filter(t => t && typeof t === 'object').map(it => ({
+    id:String(it.id || uid()), type:ITEM_TYPES[it.type] ? it.type : 'other', label:String(it.label || 'Element'),
+    x:+it.x || 0, y:+it.y || 0, w:clamp(+it.w || 2, 0.2, 100), h:clamp(+it.h || 2, 0.2, 100)
+  }));
+  fixSeats(s);
+  return s;
+}
+
+/* Make every seat assignment valid: existing table, seat index in range, no two guests on one seat. */
+function fixSeats(s = state){
+  const tables = new Map(s.tables.map(t => [t.id, t]));
+  const used = new Map(), overflow = [];
+  for (const g of s.guests){
+    const t = g.tableId && tables.get(g.tableId);
+    if (!t){ g.tableId = null; g.seat = null; continue; }
+    if (!used.has(t.id)) used.set(t.id, new Set());
+    const u = used.get(t.id);
+    if (Number.isInteger(g.seat) && g.seat >= 0 && g.seat < t.seats && !u.has(g.seat)) u.add(g.seat);
+    else overflow.push(g);
+  }
+  let bumped = 0;
+  for (const g of overflow){
+    const t = tables.get(g.tableId), u = used.get(t.id);
+    let f = -1; for (let i = 0; i < t.seats; i++) if (!u.has(i)){ f = i; break; }
+    if (f < 0){ g.tableId = null; g.seat = null; bumped++; } else { g.seat = f; u.add(f); }
+  }
+  return bumped;
+}
+
+/* ================= helpers ================= */
+const tableById = id => state.tables.find(t => t.id === id);
+const itemById = id => state.items.find(t => t.id === id);
+const guestById = id => state.guests.find(g => g.id === id);
+function seatsOf(t){
+  const a = new Array(t.seats).fill(null);
+  for (const g of state.guests) if (g.tableId === t.id && g.seat != null && g.seat < t.seats) a[g.seat] = g;
+  return a;
+}
+const freeCount = t => seatsOf(t).filter(x => !x).length;
+function allGroups(){
+  const seen = new Set(), out = [];
+  for (const g of state.guests) if (!seen.has(g.group)){ seen.add(g.group); out.push(g.group); }
+  return out;
+}
+function groupColorFn(){
+  const m = new Map(); let i = 0;
+  for (const g of allGroups()) if (g) m.set(g, PALETTE[i++ % PALETTE.length]);
+  return grp => (grp && m.get(grp)) || NOGROUP;
+}
+function shortName(n){
+  if (n.length <= 15) return n;
+  const p = n.split(/\s+/);
+  if (p.length > 1){ const s = p[0] + ' ' + p[p.length - 1][0] + '.'; if (s.length <= 17) return s; }
+  return n.slice(0, 14) + '…';
+}
+function slug(s){ return (String(s || 'wedding').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'wedding'); }
+
+/* place one guest at table t (optionally at a specific seat). Swaps when target seat taken and guest was seated. */
+function placeGuest(g, t, seat = null){
+  if (!g) return false;
+  if (!t){ g.tableId = null; g.seat = null; return true; }
+  const seats = seatsOf(t);
+  if (seat != null && seat >= 0 && seat < t.seats){
+    const occ = seats[seat];
+    if (occ === g) return true;
+    if (!occ){ g.tableId = t.id; g.seat = seat; return true; }
+    if (g.tableId){ occ.tableId = g.tableId; occ.seat = g.seat; g.tableId = t.id; g.seat = seat; return true; }
+  }
+  if (g.tableId === t.id) return true;
+  const f = seats.findIndex(x => !x);
+  if (f < 0) return false;
+  g.tableId = t.id; g.seat = f; return true;
+}
+/* place many guests at table t starting at seat `start`, going round. Returns guests that didn't fit. */
+function placeMany(list, t, start = 0){
+  const seats = seatsOf(t), n = t.seats, order = [], left = [];
+  for (let k = 0; k < n; k++){ const i = (start + k) % n; if (!seats[i]) order.push(i); }
+  for (const g of list){
+    if (g.tableId === t.id) continue;
+    const s = order.shift();
+    if (s == null){ left.push(g); continue; }
+    g.tableId = t.id; g.seat = s;
+  }
+  return left;
+}
+function nextTableLabel(){
+  const used = new Set(state.tables.map(t => t.label.toLowerCase()));
+  let n = 1; while (used.has('table ' + n)) n++;
+  return 'Table ' + n;
+}
+function overlapsItem(x, y, r, pad = 0.6){
+  return state.items.some(it => Math.abs(x - it.x) < it.w / 2 + r + pad && Math.abs(y - it.y) < it.h / 2 + r + pad);
+}
+/* ---------- room geometry (rectangle or T-shape) ----------
+   T-shape is built in "local" coords with the crossbar on top (LW wide, bd deep) and the
+   stem hanging below it, then mapped to the chosen orientation. room.w / room.h are always
+   the overall bounding box in world coords. */
+function roomGeom(R = state.room){
+  const {w, h} = R;
+  if (R.shape !== 'T'){
+    const poly = [[0, 0], [w, 0], [w, h], [0, h]];
+    return {isT:false, rects:[{x:0, y:0, w, h}], poly, walls:[[poly[0], poly[1]], [poly[3], poly[0]]], arc:null};
+  }
+  const o = R.t.orient, vert = o === 'left' || o === 'right';
+  const LW = vert ? h : w, LH = vert ? w : h;
+  const bd = clamp(+R.t.barDepth || 1, 1, LH - 1);
+  const sw = clamp(+R.t.stemWidth || 1, 1, LW);
+  const off = clamp(+R.t.stemOffset || 0, -(LW - sw) / 2, (LW - sw) / 2);
+  const sx = LW / 2 + off;
+  // rounded end: a half circle across the narrow part (flattened if the narrow part is too short for a full half circle)
+  const rounded = R.t.end === 'round';
+  const rx = sw / 2, ry = rounded ? Math.min(rx, LH - bd) : 0;
+  const head = [[0, 0], [LW, 0], [LW, bd], [sx + rx, bd], [sx + rx, LH - ry]];
+  const tail = [[sx - rx, LH - ry], [sx - rx, bd], [0, bd]];
+  const arcPts = [];
+  if (rounded) for (let i = 1; i < 48; i++){ const a = Math.PI * i / 48; arcPts.push([sx + rx * Math.cos(a), LH - ry + ry * Math.sin(a)]); }
+  const lp = [...head, ...arcPts, ...tail];
+  // straight walls to label (skip the chord of the rounded end)
+  const corners = [...head, ...tail];
+  const lw = corners.map((p, i) => [p, corners[(i + 1) % corners.length]]).filter((_, i) => !(rounded && i === head.length - 1));
+  const lr = [{x:0, y:0, w:LW, h:bd}, {x:sx - rx, y:bd, w:sw, h:LH - bd}];
+  const mp = ([x, y]) => o === 'down' ? [x, LH - y] : o === 'left' ? [y, x] : o === 'right' ? [LH - y, x] : [x, y];
+  const md = ([dx, dy]) => o === 'down' ? [dx, -dy] : o === 'left' ? [dy, dx] : o === 'right' ? [-dy, dx] : [dx, dy];
+  const mr = r => o === 'down' ? {x:r.x, y:LH - r.y - r.h, w:r.w, h:r.h}
+    : o === 'left' ? {x:r.y, y:r.x, w:r.h, h:r.w}
+    : o === 'right' ? {x:LH - r.y - r.h, y:r.x, w:r.h, h:r.w} : r;
+  const arc = rounded ? {c:mp([sx, LH - ry]), apex:mp([sx, LH]), dir:md([0, 1]), rx, ry, full:ry >= rx - 1e-9} : null;
+  return {isT:true, rects:lr.map(mr), poly:lp.map(mp), walls:lw.map(([p, q]) => [mp(p), mp(q)]), arc, bd, sw, off};
+}
+function pointInPoly(x, y, poly){
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++){
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+/* footprint: tables include their chairs; items are their rectangle */
+const footprint = (o, kind) => kind === 'table' ? {r:o.diameter / 2 + 0.55} : {hw:o.w / 2, hh:o.h / 2};
+function fits(x, y, fp, g = roomGeom()){
+  const inP = (px, py) => pointInPoly(px, py, g.poly);
+  if (fp.r != null){
+    const R = fp.r - 0.002;
+    if (!inP(x, y)) return false;
+    for (let i = 0; i < 24; i++){ const a = i * Math.PI / 12; if (!inP(x + Math.cos(a) * R, y + Math.sin(a) * R)) return false; }
+    return !g.poly.some(([px, py]) => Math.hypot(px - x, py - y) < R);
+  }
+  const hw = fp.hw - 0.002, hh = fp.hh - 0.002;
+  for (const fx of [-1, 0, 1]) for (const fy of [-1, 0, 1]) if (!inP(x + fx * hw, y + fy * hh)) return false;
+  return !g.poly.some(([px, py]) => Math.abs(px - x) < hw && Math.abs(py - y) < hh);
+}
+/* keep an object inside the room walls: if it doesn't fit where it is, slide it to the nearest spot that does */
+function clampIntoRoom(o, kind){
+  const g = roomGeom(), fp = footprint(o, kind);
+  if (fits(o.x, o.y, fp, g)) return false;
+  const ex = fp.r ?? fp.hw, ey = fp.r ?? fp.hh;
+  let best = null, fallback = null;
+  for (const R of g.rects){
+    const cx = ex * 2 >= R.w ? R.x + R.w / 2 : clamp(o.x, R.x + ex, R.x + R.w - ex);
+    const cy = ey * 2 >= R.h ? R.y + R.h / 2 : clamp(o.y, R.y + ey, R.y + R.h - ey);
+    const d = Math.hypot(cx - o.x, cy - o.y);
+    if (fits(cx, cy, fp, g)){ if (!best || d < best.d) best = {x:cx, y:cy, d}; }
+    else if (!fallback || d < fallback.d) fallback = {x:cx, y:cy, d};
+  }
+  // rounded end: pull the object back towards the arc centre so it slides along the curved wall
+  if (g.arc){
+    const {c, dir} = g.arc, vx = o.x - c[0], vy = o.y - c[1];
+    // 2 cm margin: the curve is drawn as short straight segments, and positions get rounded to the millimetre
+    const reachR = fp.r ?? Math.hypot(fp.hw, fp.hh), rad = Math.min(g.arc.rx, g.arc.ry) - reachR - 0.02;
+    const dist = Math.hypot(vx, vy);
+    if (rad > 0){
+      const k = dist > rad ? rad / dist : 1, cx = c[0] + vx * k, cy = c[1] + vy * k, d = Math.hypot(cx - o.x, cy - o.y);
+      if (fits(cx, cy, fp, g) && (!best || d < best.d)) best = {x:cx, y:cy, d};
+    }
+  }
+  // last resort: nearest point on a 25 cm grid that fits (rare: big objects near curved walls)
+  if (!best){
+    const pts = [];
+    for (let y = 0; y <= state.room.h; y += 0.25) for (let x = 0; x <= state.room.w; x += 0.25) pts.push({x, y, d:Math.hypot(x - o.x, y - o.y)});
+    pts.sort((a, b) => a.d - b.d);
+    best = pts.find(p => fits(p.x, p.y, fp, g)) || null;
+  }
+  const p = best || fallback;
+  const rx = fmt(p.x), ry = fmt(p.y);
+  if (fits(rx, ry, fp, g) || !best){ o.x = rx; o.y = ry; } else { o.x = p.x; o.y = p.y; }
+  return true;
+}
+function findFreeSpot(d, ignoreId = null){
+  const R = state.room, r = d / 2, gap = 2.3, g = roomGeom(), fp = {r:r + 0.55};
+  for (let y = 0.5; y <= R.h; y += 0.5){
+    for (let x = 0.5; x <= R.w; x += 0.5){
+      if (!fits(x, y, fp, g) || overlapsItem(x, y, r + 0.4)) continue;
+      if (state.tables.every(t => t.id === ignoreId || Math.hypot(t.x - x, t.y - y) >= r + t.diameter / 2 + gap)) return {x, y};
+    }
+  }
+  return {x:R.w / 2, y:R.h / 2};
+}
+
+/* ================= persistence & history =================
+   Served by server.js (e.g. on the NAS): the live plan and saved configurations are stored on the
+   server and sync between devices; this browser's localStorage is kept as an offline copy.
+   Opened as a plain file: everything lives in localStorage, as before. */
+const server = {on:false, version:0, timer:null, busy:false, again:false, unsynced:false, offline:false};
+
+async function api(method, url, body, extra = {}){
+  const opts = {method, cache:'no-store', ...extra};
+  if (body !== undefined){ opts.headers = {'Content-Type':'application/json'}; opts.body = JSON.stringify(body); }
+  const res = await fetch(url, opts);
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok){ const err = new Error((data && data.error) || ('HTTP ' + res.status)); err.status = res.status; err.data = data; throw err; }
+  return data;
+}
+function persistLocal(){
+  try { localStorage.setItem(LS_CURRENT, JSON.stringify({state, saveName:ui.saveName, dirty:ui.dirty, at:Date.now(), serverVersion:server.version, unsynced:server.unsynced})); } catch (e) {}
+}
+function persist(){
+  if (server.on){ server.unsynced = true; schedulePush(); }
+  persistLocal();
+}
+function readLocalRecord(){
+  try { const raw = localStorage.getItem(LS_CURRENT); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+}
+function loadCurrent(rec = readLocalRecord()){
+  try {
+    if (rec && rec.state){ ui.saveName = rec.saveName || null; ui.dirty = !!rec.dirty; return normalize(rec.state); }
+  } catch (e) {}
+  return null;
+}
+function getSavesLocal(){ try { return JSON.parse(localStorage.getItem(LS_SAVES)) || {}; } catch (e) { return {}; } }
+function setSavesLocal(o){ localStorage.setItem(LS_SAVES, JSON.stringify(o)); }
+
+/* --- live plan sync --- */
+function schedulePush(delay = 700){
+  clearTimeout(server.timer);
+  server.timer = setTimeout(pushCurrent, delay);
+}
+async function pushCurrent(){
+  if (!server.on) return;
+  if (server.busy){ server.again = true; return; }
+  server.busy = true; renderHeader();
+  try {
+    const r = await api('PUT', 'api/current', {baseVersion:server.version, state, saveName:ui.saveName, dirty:ui.dirty});
+    server.version = r.version; server.unsynced = false; server.offline = false;
+  } catch (e){
+    if (e.status === 409 && e.data){
+      // someone else saved in the meantime
+      const theirs = confirm('This plan was changed on another device since you last synced.\n\nOK = load the other device\'s version (yours stays available with Undo)\nCancel = keep your version and overwrite theirs');
+      if (theirs){ applyRemote(e.data, true); toast('Loaded the version from the other device — Ctrl+Z brings yours back'); }
+      else { server.version = e.data.version; server.again = true; }
+      server.offline = false;
+    } else if (e.status === 400 || e.status === 413){
+      toast('The server refused the plan: ' + e.message, 'err');
+    } else {
+      server.offline = true;
+      clearTimeout(server.timer); server.timer = setTimeout(pushCurrent, 5000);
+    }
+  } finally {
+    server.busy = false; persistLocal(); renderHeader();
+    if (server.again){ server.again = false; schedulePush(0); }
+  }
+}
+function applyRemote(remote, withUndo){
+  if (!remote || !remote.state) return;
+  if (withUndo){ undoStack.push(JSON.stringify(state)); if (undoStack.length > 150) undoStack.shift(); redoStack = []; }
+  state = normalize(remote.state);
+  ui.saveName = remote.saveName || null; ui.dirty = !!remote.dirty;
+  server.version = remote.version; server.unsynced = false; server.offline = false;
+  persistLocal(); render();
+}
+async function pollServer(){
+  if (!server.on || server.busy || server.unsynced || drag || document.hidden || $('dialog[open]')) return;
+  try {
+    const v = await api('GET', 'api/version');
+    const wasOffline = server.offline; server.offline = false;
+    if (v.version > server.version){
+      const cur = await api('GET', 'api/current');
+      if (!server.unsynced && !server.busy && !drag && cur.version > server.version){
+        applyRemote(cur, true);
+        toast('Updated with changes from another device');
+      }
+    } else if (wasOffline) renderHeader();
+  } catch (e){ if (!server.offline){ server.offline = true; renderHeader(); } }
+}
+
+/* --- saved configurations (server or this browser) --- */
+async function listSaves(){
+  if (server.on) return api('GET', 'api/saves');
+  return Object.entries(getSavesLocal()).map(([name, v]) => ({name, savedAt:v.savedAt, guests:(v.data?.guests || []).length, tables:(v.data?.tables || []).length}))
+    .sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+}
+async function readSave(name){
+  if (server.on) return api('GET', 'api/saves/' + encodeURIComponent(name));
+  return getSavesLocal()[name] || null;
+}
+async function writeSave(name, data){
+  if (server.on) return api('PUT', 'api/saves/' + encodeURIComponent(name), {data});
+  const s = getSavesLocal(); s[name] = {savedAt:Date.now(), data}; setSavesLocal(s);
+}
+async function removeSave(name){
+  if (server.on) return api('DELETE', 'api/saves/' + encodeURIComponent(name));
+  const s = getSavesLocal(); delete s[name]; setSavesLocal(s);
+}
+
+function commit(mutate){
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > 150) undoStack.shift();
+  redoStack = [];
+  const r = mutate();
+  ui.dirty = true; persist(); render();
+  return r;
+}
+function undo(){
+  if (!undoStack.length) return;
+  redoStack.push(JSON.stringify(state));
+  state = normalize(JSON.parse(undoStack.pop()));
+  ui.dirty = true; persist(); render(); toast('Undone');
+}
+function redo(){
+  if (!redoStack.length) return;
+  undoStack.push(JSON.stringify(state));
+  state = normalize(JSON.parse(redoStack.pop()));
+  ui.dirty = true; persist(); render(); toast('Redone');
+}
+function setPref(key, val){ state.settings[key] = val; persist(); render(); }
+
+/* ================= toasts ================= */
+function toast(msg, kind = ''){
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind; el.textContent = msg;
+  $('#toasts').append(el);
+  setTimeout(() => el.classList.add('out'), 2800);
+  setTimeout(() => el.remove(), 3200);
+}
+
+/* ================= rendering ================= */
+function render(){
+  if (ui.selected && !(ui.selected.type === 'table' ? tableById(ui.selected.id) : itemById(ui.selected.id))) ui.selected = null;
+  for (const id of [...ui.checked]) if (!guestById(id)) ui.checked.delete(id);
+  renderHeader(); renderGuests(); renderTables(); renderSettings(); renderPlan(); renderInspector(); renderLegend();
+}
+
+function renderHeader(){
+  const total = state.guests.length, seated = state.guests.filter(g => g.tableId).length;
+  const cap = state.tables.reduce((a, t) => a + t.seats, 0), max = state.settings.maxTables;
+  const stat = (label, val, warn) => `<div class="stat${warn ? ' warn' : ''}"><b>${val}</b><span>${label}</span></div>`;
+  $('#stats').innerHTML = stat('Guests', total) + stat('Seated', seated) + stat('Not seated', total - seated, total - seated > 0)
+    + stat('Tables', `${state.tables.length}/${max}`, state.tables.length > max) + stat('Seats', cap, cap < total);
+  const ni = $('#weddingName'); if (document.activeElement !== ni) ni.value = state.name;
+  document.title = (state.name || 'Wedding') + ' – Seating Planner';
+  const st = $('#saveStatus');
+  const where = !server.on ? 'autosaved in this browser'
+    : server.offline ? 'server unreachable — kept in this browser, retrying'
+    : (server.unsynced || server.busy) ? 'saving to server…' : 'synced to server';
+  st.className = 'sub' + (ui.dirty || server.offline ? ' dirty' : '');
+  st.innerHTML = '<span class="dot"></span>' + (ui.saveName
+    ? (ui.dirty ? `Changes since “${esc(ui.saveName)}”` : `Saved as “${esc(ui.saveName)}”`)
+    : 'Not saved as a configuration yet') + ' · ' + where + (state.date ? ' · ' + esc(new Date(state.date + 'T00:00').toLocaleDateString()) : '');
+  $('#btnUndo').disabled = !undoStack.length; $('#btnRedo').disabled = !redoStack.length;
+  $$('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === ui.tab));
+  $$('.tabpane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + ui.tab));
+}
+
+function filteredGuests(){
+  const q = ui.search.trim().toLowerCase();
+  let list = state.guests.filter(g => {
+    if (q && !(g.name.toLowerCase().includes(q) || g.group.toLowerCase().includes(q) || g.diet.toLowerCase().includes(q) || g.notes.toLowerCase().includes(q))) return false;
+    if (ui.group !== '__all' && g.group !== ui.group) return false;
+    if (ui.status === 'unassigned' && g.tableId) return false;
+    if (ui.status === 'seated' && !g.tableId) return false;
+    return true;
+  });
+  const coll = new Intl.Collator(undefined, {sensitivity:'base'});
+  const tIdx = new Map(state.tables.map((t, i) => [t.id, i]));
+  if (ui.sort === 'name') list.sort((a, b) => coll.compare(a.name, b.name));
+  else if (ui.sort === 'group') list.sort((a, b) => coll.compare(a.group || '￿', b.group || '￿') || coll.compare(a.name, b.name));
+  else if (ui.sort === 'table') list.sort((a, b) => (a.tableId ? tIdx.get(a.tableId) : 1e9) - (b.tableId ? tIdx.get(b.tableId) : 1e9) || (a.seat ?? 0) - (b.seat ?? 0));
+  return list;
+}
+
+function renderGuests(){
+  const groups = allGroups(), color = groupColorFn();
+  const gs = $('#fGroup');
+  gs.innerHTML = `<option value="__all">All groups</option>` + groups.map(g => `<option value="${esc(g)}">${g ? esc(g) : '— No group —'}</option>`).join('');
+  if (ui.group !== '__all' && !groups.includes(ui.group)) ui.group = '__all';
+  gs.value = ui.group;
+  $('#groupList').innerHTML = groups.filter(Boolean).map(g => `<option value="${esc(g)}">`).join('');
+
+  const list = filteredGuests();
+  $('#guestCount').textContent = state.guests.length ? `${list.length} of ${state.guests.length} guests` : '';
+  const allChecked = list.length > 0 && list.every(g => ui.checked.has(g.id));
+  $('#chkAll').checked = allChecked;
+  $('#chkAll').indeterminate = !allChecked && list.some(g => ui.checked.has(g.id));
+
+  const el = $('#guestList');
+  if (!state.guests.length){
+    el.innerHTML = `<div class="empty"><div class="big">No guests yet</div><div>Add guests above, paste a list, or import a CSV / Excel file.<br>You can also drop a file right here.</div><button id="btnDemo3" type="button">Load demo plan</button></div>`;
+  } else if (!list.length){
+    el.innerHTML = `<div class="empty">No guests match the filters.</div>`;
+  } else {
+    el.innerHTML = list.map(g => {
+      const t = g.tableId && tableById(g.tableId);
+      const meta = [g.group, g.diet, g.notes].filter(Boolean).map(esc).join(' · ');
+      return `<div class="guest${ui.checked.has(g.id) ? ' checked' : ''}" draggable="true" data-drag-guest="${g.id}" data-id="${g.id}">
+        <input type="checkbox" class="chk"${ui.checked.has(g.id) ? ' checked' : ''}>
+        <span class="gdot" style="background:${color(g.group)}"></span>
+        <div class="gmain"><div class="gname">${esc(g.name)}</div>${meta ? `<div class="gmeta">${meta}</div>` : ''}</div>
+        ${t ? `<button type="button" class="badge seated" data-goto="${t.id}" title="Show on plan">${esc(t.label)} · ${g.seat + 1}</button>` : `<span class="badge free">not seated</span>`}
+        <button type="button" class="icon" data-act="edit" title="Edit">✎</button>
+        <button type="button" class="icon" data-act="del" title="Delete">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  const bb = $('#bulkBar');
+  if (ui.checked.size){
+    bb.innerHTML = `<div class="bulk"><b>${ui.checked.size} selected</b>
+      <select id="bulkTable"><option value="">Seat at…</option>${state.tables.map(t => `<option value="${t.id}">${esc(t.label)} (${freeCount(t)} free)</option>`).join('')}</select>
+      <button type="button" data-bulk="unseat">Unseat</button>
+      <button type="button" data-bulk="group">Set group…</button>
+      <button type="button" data-bulk="del" class="danger">Delete</button>
+      <button type="button" data-bulk="clear" class="ghost">✕</button></div>
+      <div class="small muted" style="padding:2px 4px 0">Tip: drag any selected guest to move all of them.</div>`;
+  } else bb.innerHTML = '';
+}
+
+function renderTables(){
+  const max = state.settings.maxTables, n = state.tables.length;
+  const lim = $('#tableLimit');
+  lim.textContent = `${n} / ${max} tables` + (n >= max ? ' — limit reached' : '');
+  lim.className = 'limit' + (n >= max ? ' hit' : '');
+  $('#btnAddTable').disabled = $('#btnAddTable2').disabled = n >= max;
+  $('#btnAddTable').title = n >= max ? `Maximum of ${max} tables reached (change in Settings)` : 'Add a round table';
+  const el = $('#tableList');
+  if (!n){ el.innerHTML = `<div class="empty">No tables yet.</div>`; return; }
+  el.innerHTML = state.tables.map(t => {
+    const f = seatsOf(t).filter(Boolean).length;
+    return `<div class="trow${ui.selected?.id === t.id ? ' sel' : ''}" data-id="${t.id}">
+      <div><b>${esc(t.label)}</b> <span class="small muted">⌀ ${fmt(t.diameter)} m</span></div>
+      <div class="bar${f >= t.seats ? ' full' : ''}"><span style="width:${Math.round(f / t.seats * 100)}%"></span></div>
+      <div class="tnum">${f}/${t.seats}</div></div>`;
+  }).join('');
+}
+
+function renderSettings(){
+  const S = state.settings;
+  const R = state.room, g = roomGeom(), isT = R.shape === 'T';
+  const vals = {date:state.date, roomW:R.w, roomH:R.h, maxTables:S.maxTables, defaultSeats:S.defaultSeats, tableDiameter:S.tableDiameter,
+    shape:R.shape, orient:R.t.orient, end:R.t.end, barDepth:isT ? fmt(g.bd) : R.t.barDepth, stemWidth:isT ? fmt(g.sw) : R.t.stemWidth, stemOffset:isT ? fmt(g.off) : R.t.stemOffset};
+  $$('[data-set]').forEach(inp => { if (document.activeElement !== inp) inp.value = vals[inp.dataset.set] ?? ''; });
+  $('#tFields').hidden = !isT;
+  $('#lblW').textContent = isT ? 'Overall width (m)' : 'Width (m)';
+  $('#lblH').textContent = isT ? 'Overall length (m)' : 'Length (m)';
+  $$('[data-pref]').forEach(inp => { inp.checked = !!S[inp.dataset.pref]; });
+}
+
+function renderPlan(){
+  const R = state.room, S = state.settings, color = groupColorFn();
+  const G = roomGeom();
+  const outline = 'M' + G.poly.map(p => fmt(p[0]) + ' ' + fmt(p[1])).join('L') + 'Z';
+  let h = `<clipPath id="roomClip"><path d="${outline}"/></clipPath><path class="floor" d="${outline}"/>`;
+  if (S.showGrid){
+    let p = '';
+    for (let x = 1; x < R.w; x++) p += `M${x} 0V${R.h}`;
+    for (let y = 1; y < R.h; y++) p += `M0 ${y}H${R.w}`;
+    h += `<path class="grid" clip-path="url(#roomClip)" d="${p}"/>`;
+  }
+  h += `<path class="walls" d="${outline}"/>`;
+  // wall lengths: every straight wall for a T, just top + left for a plain rectangle
+  const P = G.poly;
+  for (const [p, q] of G.walls){
+    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (len < 0.5) continue;
+    const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
+    let nx = (q[1] - p[1]) / len, ny = -(q[0] - p[0]) / len;
+    if (pointInPoly(mx + nx * 0.1, my + ny * 0.1, P)){ nx = -nx; ny = -ny; }
+    const vert = Math.abs(q[0] - p[0]) < 1e-6;
+    h += `<text class="dim" transform="translate(${fmt(mx + nx * 0.42)} ${fmt(my + ny * 0.42)})${vert ? ' rotate(-90)' : ''}">${fmt(len)} m</text>`;
+  }
+  if (G.arc){
+    const {apex, dir, rx} = G.arc;
+    const txt = G.arc.full ? `half circle · ⌀ ${fmt(rx * 2)} m` : `rounded end · ${fmt(rx * 2)} m wide`;
+    h += `<text class="dim" transform="translate(${fmt(apex[0] + dir[0] * 0.42)} ${fmt(apex[1] + dir[1] * 0.42)})${dir[0] !== 0 ? ' rotate(-90)' : ''}">${txt}</text>`;
+  }
+
+  for (const it of state.items){
+    const ty = ITEM_TYPES[it.type] || ITEM_TYPES.other;
+    const fs = clamp(Math.min(it.w / Math.max(4, it.label.length) * 1.7, it.h * 0.45), 0.16, 0.6);
+    h += `<g class="item${ui.selected?.id === it.id ? ' sel' : ''}" data-kind="item" data-id="${it.id}" transform="translate(${fmt(it.x)} ${fmt(it.y)})">
+      <rect x="${fmt(-it.w / 2)}" y="${fmt(-it.h / 2)}" width="${fmt(it.w)}" height="${fmt(it.h)}" rx="0.18" style="fill:${ty.fill};stroke:${ty.stroke}"/>
+      <text font-size="${fmt(fs)}">${esc(it.label)}</text></g>`;
+  }
+
+  for (const t of state.tables){
+    const seats = seatsOf(t), n = t.seats, r = t.diameter / 2, ring = r + 0.3;
+    const filled = seats.filter(Boolean).length;
+    const sr = Math.min(0.24, Math.PI * ring / n * 0.42);
+    let g = `<g class="tbl${ui.selected?.id === t.id ? ' sel' : ''}${filled >= n ? ' full' : ''}" data-kind="table" data-id="${t.id}" transform="translate(${fmt(t.x)} ${fmt(t.y)})">`;
+    let names = '';
+    seats.forEach((gs, i) => {
+      const a = -Math.PI / 2 + 2 * Math.PI * i / n, c = Math.cos(a), s = Math.sin(a);
+      g += `<circle class="seat${gs ? ' on' : ''}" data-kind="seat" data-id="${t.id}" data-seat="${i}"${gs ? ` data-guest="${gs.id}" style="fill:${color(gs.group)}"` : ''} cx="${fmt(c * ring)}" cy="${fmt(s * ring)}" r="${fmt(sr)}"><title>${gs ? esc(gs.name) + (gs.group ? ' — ' + esc(gs.group) : '') + (gs.diet ? ' (' + esc(gs.diet) + ')' : '') : 'Seat ' + (i + 1) + ' (empty)'}</title></circle>`;
+      if (gs && S.showNames){
+        const lr = ring + sr + 0.07, anchor = c > 0.35 ? 'start' : c < -0.35 ? 'end' : 'middle';
+        const ty = s * lr + (anchor === 'middle' ? (s > 0 ? 0.16 : -0.05) : 0.07);
+        names += `<text class="gn" x="${fmt(c * lr)}" y="${fmt(ty)}" text-anchor="${anchor}">${esc(shortName(gs.name))}</text>`;
+      }
+    });
+    const fs = Math.min(0.36, r * 0.3);
+    const maxChars = Math.max(4, Math.floor(t.diameter / fs * 1.6));
+    const lbl = t.label.length > maxChars ? t.label.slice(0, maxChars - 1) + '…' : t.label;
+    g += `<circle class="top" r="${fmt(r)}"/>`;
+    g += `<text class="tl" y="${fmt(-fs * 0.1)}" font-size="${fmt(fs)}">${esc(lbl)}</text><text class="tc" y="${fmt(fs * 0.95)}" font-size="${fmt(fs * 0.62)}">${filled}/${n}</text>`;
+    g += names + '</g>';
+    h += g;
+  }
+  $('#world').innerHTML = h;
+  $('#planEmpty').classList.toggle('show', !state.tables.length && !state.items.length);
+}
+
+function renderLegend(){
+  const color = groupColorFn();
+  const groups = allGroups().filter(Boolean);
+  $('#legend').innerHTML = groups.length ? groups.map(g => `<span><i style="background:${color(g)}"></i>${esc(g)}</span>`).join('') : '';
+}
+
+function renderInspector(){
+  const el = $('#inspector'), sel = ui.selected;
+  if (!sel){ el.className = ''; el.innerHTML = ''; return; }
+  el.className = 'show';
+  if (sel.type === 'table'){
+    const t = tableById(sel.id), seats = seatsOf(t), color = groupColorFn();
+    const un = state.guests.filter(g => !g.tableId).sort((a, b) => a.name.localeCompare(b.name));
+    const unOpts = un.map(g => `<option value="${g.id}">${esc(g.name)}${g.group ? ' — ' + esc(g.group) : ''}</option>`).join('');
+    el.innerHTML = `<div class="insp-head"><h3>Round table</h3><button class="icon" data-act="close" title="Close (Esc)">✕</button></div>
+      <label class="field">Name<input data-f="label" value="${esc(t.label)}"></label>
+      <div class="grid2">
+        <label class="field">Seats<input type="number" min="1" max="24" data-f="seats" value="${t.seats}"></label>
+        <label class="field">Diameter (m)<input type="number" min="0.6" max="5" step="0.1" data-f="diameter" value="${fmt(t.diameter)}"></label>
+      </div>
+      <h4>Seating · ${seats.filter(Boolean).length}/${t.seats}</h4>
+      <div>${seats.map((g, i) => g
+        ? `<div class="srow" draggable="true" data-drag-guest="${g.id}" data-src="insp"><span class="sn">${i + 1}</span><span class="gdot" style="background:${color(g.group)}"></span><span class="nm" title="${esc(g.name)}">${esc(g.name)}</span><button class="icon" data-unseat="${g.id}" title="Unseat">✕</button></div>`
+        : `<div class="srow"><span class="sn">${i + 1}</span><span class="gdot" style="background:#e6ddd1"></span>${un.length ? `<select data-seatadd="${i}"><option value="">— empty — choose guest…</option>${unOpts}</select>` : '<span class="nm muted">— empty —</span>'}</div>`).join('')}</div>
+      <div class="small muted">Drop guests here or on the table. Drag a name back to the guest list to unseat.</div>
+      <div class="row wrap"><button data-act="dup">Duplicate</button><button data-act="clearseats">Clear seats</button><button data-act="del" class="danger">Delete</button></div>`;
+  } else {
+    const it = itemById(sel.id);
+    el.innerHTML = `<div class="insp-head"><h3>Room element</h3><button class="icon" data-act="close" title="Close (Esc)">✕</button></div>
+      <label class="field">Label<input data-f="label" value="${esc(it.label)}"></label>
+      <label class="field">Type<select data-f="type">${Object.entries(ITEM_TYPES).map(([k, v]) => `<option value="${k}"${k === it.type ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>
+      <div class="grid2">
+        <label class="field">Width (m)<input type="number" min="0.2" max="100" step="0.1" data-f="w" value="${fmt(it.w)}"></label>
+        <label class="field">Depth (m)<input type="number" min="0.2" max="100" step="0.1" data-f="h" value="${fmt(it.h)}"></label>
+      </div>
+      <div class="row wrap"><button data-act="rotate" title="Swap width and depth">⟳ Rotate 90°</button><button data-act="dup">Duplicate</button><button data-act="del" class="danger">Delete</button></div>`;
+  }
+}
+
+/* ================= view (pan / zoom) ================= */
+const svg = $('#plan');
+function applyView(){
+  const r = svg.getBoundingClientRect();
+  if (!r.width || !r.height || !ui.view) return;
+  const v = ui.view, cy = v.y + v.h / 2;
+  v.h = v.w * r.height / r.width; v.y = cy - v.h / 2;
+  svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
+}
+function fitView(){
+  const r = svg.getBoundingClientRect(), ar = (r.width || 800) / (r.height || 600);
+  // leave room for the toolbar (top) and inspector (right) overlays
+  const pad = 1.6;
+  let w = state.room.w + pad * 2, h = state.room.h + pad * 2 + 1.5;
+  if (w / h < ar) w = h * ar;
+  ui.view = {x:state.room.w / 2 - w / 2, y:0, w, h:w / ar};
+  ui.view.y = state.room.h / 2 - ui.view.h / 2 - 0.6;
+  applyView();
+}
+function toWorld(cx, cy){
+  const p = svg.createSVGPoint(); p.x = cx; p.y = cy;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+function zoomAt(k, cx, cy){
+  const v = ui.view, r = svg.getBoundingClientRect();
+  if (cx == null){ cx = r.left + r.width / 2; cy = r.top + r.height / 2; }
+  const p = toWorld(cx, cy);
+  const nw = clamp(v.w * k, 3, 400), s = nw / v.w;
+  v.x = p.x - (p.x - v.x) * s; v.y = p.y - (p.y - v.y) * s; v.w = nw; v.h *= s;
+  applyView();
+}
+function centerOn(x, y){
+  const v = ui.view; v.x = x - v.w / 2; v.y = y - v.h / 2; applyView();
+}
+new ResizeObserver(() => { if (ui.view) applyView(); }).observe(svg);
+svg.addEventListener('wheel', e => { e.preventDefault(); zoomAt(Math.pow(1.0015, e.deltaY), e.clientX, e.clientY); }, {passive:false});
+
+/* ================= hit testing & drops ================= */
+function hitTable(p){
+  let best = null;
+  for (const t of state.tables){
+    const d = Math.hypot(p.x - t.x, p.y - t.y);
+    if (d <= t.diameter / 2 + 0.75 && (!best || d < best.d)) best = {table:t, d};
+  }
+  if (!best) return null;
+  const t = best.table;
+  let seat = null;
+  if (best.d > t.diameter / 2 * 0.55){
+    const ang = Math.atan2(p.y - t.y, p.x - t.x);
+    seat = ((Math.round((ang + Math.PI / 2) / (2 * Math.PI) * t.seats) % t.seats) + t.seats) % t.seats;
+  }
+  return {table:t, seat};
+}
+function setDropHighlight(id){ $$('#world g.tbl').forEach(el => el.classList.toggle('drop', el.dataset.id === id)); }
+
+function dropGuestsOnTable(ids, t, seat){
+  const guests = ids.map(guestById).filter(Boolean);
+  if (!guests.length || !t) return;
+  ui.selected = {type:'table', id:t.id};
+  commit(() => {
+    if (guests.length === 1 && seat != null){
+      if (!placeGuest(guests[0], t, seat)) toast(`${t.label} is full`, 'warn');
+    } else {
+      const left = placeMany(guests, t, seat ?? 0);
+      if (left.length) toast(`${t.label} is full — ${left.length} guest${left.length > 1 ? 's' : ''} not seated`, 'warn');
+    }
+  });
+}
+function unseatGuests(ids){
+  const gs = ids.map(guestById).filter(g => g && g.tableId);
+  if (!gs.length) return;
+  commit(() => gs.forEach(g => { g.tableId = null; g.seat = null; }));
+  toast(gs.length === 1 ? `${gs[0].name} unseated` : `${gs.length} guests unseated`);
+}
+
+/* ================= pointer interaction on plan ================= */
+let drag = null;
+const ghost = $('#ghost');
+svg.addEventListener('pointerdown', e => {
+  if (e.button !== 0 && e.button !== 1) return;
+  const p = toWorld(e.clientX, e.clientY);
+  const seatEl = e.button === 0 && e.target.closest('[data-kind="seat"][data-guest]');
+  const objEl = e.button === 0 && e.target.closest('[data-kind="table"],[data-kind="item"]');
+  if (seatEl){
+    drag = {mode:'guest', gid:seatEl.dataset.guest, tableId:seatEl.dataset.id, sx:e.clientX, sy:e.clientY, moved:false};
+  } else if (objEl){
+    const kind = objEl.dataset.kind, id = objEl.dataset.id;
+    const obj = kind === 'table' ? tableById(id) : itemById(id);
+    if (!obj) return;
+    const changed = ui.selected?.id !== id;
+    ui.selected = {type:kind, id};
+    if (changed){ renderInspector(); renderTables(); $$('#world .sel').forEach(x => x.classList.remove('sel')); $(`#world [data-id="${id}"][data-kind="${kind}"]`)?.classList.add('sel'); }
+    drag = {mode:'move', kind, id, obj, offX:p.x - obj.x, offY:p.y - obj.y, sx:e.clientX, sy:e.clientY, moved:false, snapshot:JSON.stringify(state)};
+  } else {
+    drag = {mode:'pan', sx:e.clientX, sy:e.clientY, view:{...ui.view}, moved:false};
+  }
+  svg.setPointerCapture(e.pointerId);
+});
+svg.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+  if (!drag.moved){
+    if (Math.hypot(dx, dy) < 4) return;
+    drag.moved = true;
+    if (drag.mode === 'move'){ undoStack.push(drag.snapshot); redoStack = []; }
+    if (drag.mode === 'guest'){ const g = guestById(drag.gid); ghost.textContent = g ? g.name : ''; ghost.style.display = 'block'; }
+    if (drag.mode === 'pan') svg.classList.add('panning');
+  }
+  if (drag.mode === 'pan'){
+    const r = svg.getBoundingClientRect(), k = ui.view.w / r.width;
+    ui.view.x = drag.view.x - dx * k; ui.view.y = drag.view.y - dy * k; applyView();
+  } else if (drag.mode === 'move'){
+    const p = toWorld(e.clientX, e.clientY), o = drag.obj;
+    o.x = p.x - drag.offX; o.y = p.y - drag.offY;
+    if (state.settings.snap){ o.x = snapTo(o.x, 0.25); o.y = snapTo(o.y, 0.25); }
+    clampIntoRoom(o, drag.kind);
+    $(`#world [data-kind="${drag.kind}"][data-id="${drag.id}"]`)?.setAttribute('transform', `translate(${fmt(o.x)} ${fmt(o.y)})`);
+  } else if (drag.mode === 'guest'){
+    ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px';
+    const over = document.elementFromPoint(e.clientX, e.clientY);
+    const hit = over && over.closest('#plan') ? hitTable(toWorld(e.clientX, e.clientY)) : null;
+    setDropHighlight(hit?.table.id);
+    $('#sidebar').classList.toggle('drop-unassign', !!(over && over.closest('#sidebar')));
+  }
+});
+function endPointer(e, cancelled){
+  if (!drag) return;
+  const d = drag; drag = null;
+  svg.classList.remove('panning'); ghost.style.display = 'none'; setDropHighlight(null);
+  $('#sidebar').classList.remove('drop-unassign');
+  if (cancelled) { if (d.mode === 'move' && d.moved){ render(); } return; }
+  if (d.mode === 'move'){
+    if (d.moved){ ui.dirty = true; persist(); render(); }
+  } else if (d.mode === 'pan'){
+    if (!d.moved && ui.selected){ ui.selected = null; render(); }
+  } else if (d.mode === 'guest'){
+    if (!d.moved){ ui.selected = {type:'table', id:d.tableId}; render(); return; }
+    const over = document.elementFromPoint(e.clientX, e.clientY);
+    if (over && over.closest('#sidebar')) unseatGuests([d.gid]);
+    else if (over && over.closest('#plan')){
+      const hit = hitTable(toWorld(e.clientX, e.clientY));
+      if (hit) dropGuestsOnTable([d.gid], hit.table, hit.seat);
+    }
+  }
+}
+svg.addEventListener('pointerup', e => endPointer(e, false));
+svg.addEventListener('pointercancel', e => endPointer(e, true));
+svg.addEventListener('dblclick', e => {
+  const objEl = e.target.closest('[data-kind="table"],[data-kind="item"]');
+  if (objEl){ const inp = $('#inspector [data-f="label"]'); if (inp){ inp.focus(); inp.select(); } }
+});
+
+/* ================= HTML drag & drop (guest list / inspector → plan) ================= */
+document.addEventListener('dragstart', e => {
+  const row = e.target.closest && e.target.closest('[data-drag-guest]');
+  if (!row) return;
+  const id = row.dataset.dragGuest;
+  let ids = [id];
+  if (row.classList.contains('guest') && ui.checked.has(id) && ui.checked.size > 1) ids = state.guests.filter(g => ui.checked.has(g.id)).map(g => g.id);
+  ui.dragIds = ids; ui.dragSource = row.dataset.src || 'list';
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', ids.map(i => guestById(i)?.name).join(', '));
+  if (ids.length > 1){
+    ghost.textContent = ids.length + ' guests'; ghost.style.display = 'block'; ghost.style.left = '-999px';
+    e.dataTransfer.setDragImage(ghost, 0, 0);
+    setTimeout(() => { ghost.style.display = 'none'; }, 0);
+  }
+  row.classList.add('dragging');
+});
+document.addEventListener('dragend', e => {
+  ui.dragIds = null; ui.dragSource = null;
+  setDropHighlight(null); $('#sidebar').classList.remove('drop-unassign'); $('#inspector').classList.remove('drop');
+  $$('.dragging').forEach(x => x.classList.remove('dragging'));
+});
+svg.addEventListener('dragover', e => {
+  if (!ui.dragIds) return;
+  const hit = hitTable(toWorld(e.clientX, e.clientY));
+  setDropHighlight(hit?.table.id);
+  if (hit){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+});
+svg.addEventListener('dragleave', () => setDropHighlight(null));
+svg.addEventListener('drop', e => {
+  if (!ui.dragIds) return;
+  e.preventDefault();
+  const hit = hitTable(toWorld(e.clientX, e.clientY));
+  if (hit) dropGuestsOnTable(ui.dragIds, hit.table, hit.seat);
+  setDropHighlight(null);
+});
+const inspector = $('#inspector');
+inspector.addEventListener('dragover', e => {
+  if (!ui.dragIds || ui.selected?.type !== 'table' || ui.dragSource === 'insp') return;
+  e.preventDefault(); inspector.classList.add('drop');
+});
+inspector.addEventListener('dragleave', e => { if (!inspector.contains(e.relatedTarget)) inspector.classList.remove('drop'); });
+inspector.addEventListener('drop', e => {
+  if (!ui.dragIds || ui.selected?.type !== 'table') return;
+  e.preventDefault(); inspector.classList.remove('drop');
+  dropGuestsOnTable(ui.dragIds, tableById(ui.selected.id), null);
+});
+const sidebar = $('#sidebar');
+sidebar.addEventListener('dragover', e => {
+  const files = e.dataTransfer.types.includes('Files');
+  if (files || (ui.dragIds && ui.dragSource === 'insp')){ e.preventDefault(); sidebar.classList.add('drop-unassign'); }
+});
+sidebar.addEventListener('dragleave', e => { if (!sidebar.contains(e.relatedTarget)) sidebar.classList.remove('drop-unassign'); });
+sidebar.addEventListener('drop', e => {
+  sidebar.classList.remove('drop-unassign');
+  if (e.dataTransfer.files && e.dataTransfer.files.length){ e.preventDefault(); ui.tab = 'guests'; importGuestFile(e.dataTransfer.files[0]); return; }
+  if (ui.dragIds && ui.dragSource === 'insp'){ e.preventDefault(); unseatGuests(ui.dragIds); }
+});
+// stop the browser from opening files dropped elsewhere
+window.addEventListener('dragover', e => { if (e.dataTransfer.types.includes('Files')) e.preventDefault(); });
+window.addEventListener('drop', e => { if (e.dataTransfer.types.includes('Files') && !sidebar.contains(e.target)) e.preventDefault(); });
+
+/* ================= actions ================= */
+function addTable(){
+  const max = state.settings.maxTables;
+  if (state.tables.length >= max){ toast(`Maximum of ${max} tables reached — change it in Settings`, 'warn'); return; }
+  const d = state.settings.tableDiameter, pos = findFreeSpot(d);
+  const t = {id:uid(), label:nextTableLabel(), x:pos.x, y:pos.y, seats:state.settings.defaultSeats, diameter:d};
+  clampIntoRoom(t, 'table');
+  ui.selected = {type:'table', id:t.id};
+  commit(() => state.tables.push(t));
+}
+function addItem(type){
+  const ty = ITEM_TYPES[type]; if (!ty) return;
+  const it = {id:uid(), type, label:ty.label, x:state.room.w / 2, y:state.room.h / 2, w:ty.w, h:ty.h};
+  // try to find a spot not covering tables
+  const R = state.room, g = roomGeom();
+  let found = false;
+  outer: for (let y = ty.h / 2 + 0.5; y <= R.h - ty.h / 2; y += 0.5){
+    for (let x = ty.w / 2 + 0.5; x <= R.w - ty.w / 2; x += 0.5){
+      if (!fits(x, y, {hw:ty.w / 2, hh:ty.h / 2}, g)) continue;
+      const clear = state.tables.every(t => Math.abs(t.x - x) > ty.w / 2 + t.diameter / 2 + 0.8 || Math.abs(t.y - y) > ty.h / 2 + t.diameter / 2 + 0.8)
+        && state.items.every(o => Math.abs(o.x - x) > (o.w + ty.w) / 2 + 0.3 || Math.abs(o.y - y) > (o.h + ty.h) / 2 + 0.3);
+      if (clear){ it.x = x; it.y = y; found = true; break outer; }
+    }
+  }
+  if (!found) clampIntoRoom(it, 'item');
+  ui.selected = {type:'item', id:it.id};
+  commit(() => state.items.push(it));
+}
+function deleteSelected(){
+  const sel = ui.selected; if (!sel) return;
+  if (sel.type === 'table'){
+    const t = tableById(sel.id); if (!t) return;
+    const n = state.guests.filter(g => g.tableId === t.id).length;
+    ui.selected = null;
+    commit(() => {
+      state.guests.forEach(g => { if (g.tableId === t.id){ g.tableId = null; g.seat = null; } });
+      state.tables = state.tables.filter(x => x.id !== t.id);
+    });
+    toast(`Deleted ${t.label}${n ? ` — ${n} guest${n > 1 ? 's' : ''} unseated` : ''} (Ctrl+Z to undo)`);
+  } else {
+    ui.selected = null;
+    commit(() => { state.items = state.items.filter(x => x.id !== sel.id); });
+  }
+}
+function duplicateSelected(){
+  const sel = ui.selected; if (!sel) return;
+  if (sel.type === 'table'){
+    if (state.tables.length >= state.settings.maxTables){ toast(`Maximum of ${state.settings.maxTables} tables reached`, 'warn'); return; }
+    const t = tableById(sel.id), pos = findFreeSpot(t.diameter);
+    const nt = {...t, id:uid(), label:nextTableLabel(), x:pos.x, y:pos.y};
+    clampIntoRoom(nt, 'table');
+    ui.selected = {type:'table', id:nt.id};
+    commit(() => state.tables.push(nt));
+  } else {
+    const it = itemById(sel.id), ni = {...it, id:uid(), x:it.x + 0.6, y:it.y + 0.6};
+    clampIntoRoom(ni, 'item');
+    ui.selected = {type:'item', id:ni.id};
+    commit(() => state.items.push(ni));
+  }
+}
+function autoArrange(){
+  if (!state.tables.length){ toast('Add some tables first', 'warn'); return; }
+  const maxD = Math.max(...state.tables.map(t => t.diameter));
+  const sp = maxD + 2.3, r = maxD / 2, reach = r + 0.55, g = roomGeom();
+  const spots = [];
+  // lay a centred grid into each part of the room (the whole room, or crossbar + stem of a T)
+  for (const R of g.rects){
+    const cols = Math.max(1, Math.floor((R.w - 2 * reach) / sp) + 1);
+    const rows = Math.max(1, Math.floor((R.h - 2 * reach) / sp) + 1);
+    const ox = R.x + (R.w - (cols - 1) * sp) / 2, oy = R.y + (R.h - (rows - 1) * sp) / 2;
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++){
+      const x = ox + i * sp, y = oy + j * sp;
+      if (fits(x, y, {r:reach}, g) && !overlapsItem(x, y, r, 0.5) && spots.every(s => Math.hypot(s.x - x, s.y - y) >= sp - 0.01)) spots.push({x, y});
+    }
+  }
+  spots.sort((a, b) => a.y - b.y || a.x - b.x);
+  commit(() => {
+    state.tables.forEach((t, k) => {
+      const s = spots[k];
+      if (s){ t.x = fmt(s.x); t.y = fmt(s.y); }
+      else { const c = g.rects[0]; t.x = c.x + c.w / 2 + (k % 5) * 0.4; t.y = c.y + c.h / 2 + (k % 5) * 0.4; clampIntoRoom(t, 'table'); }
+    });
+  });
+  if (spots.length < state.tables.length) toast(`Room is too small to fit all ${state.tables.length} tables neatly — ${state.tables.length - spots.length} placed in the middle`, 'warn');
+  else toast('Tables arranged', 'ok');
+}
+/* seat unassigned guests, keeping groups together. Mutates state; returns count left. */
+function autoSeatCore(){
+  const un = state.guests.filter(g => !g.tableId);
+  const groups = new Map();
+  for (const g of un){ if (!groups.has(g.group)) groups.set(g.group, []); groups.get(g.group).push(g); }
+  const order = [...groups.entries()].sort((a, b) => (a[0] === '' ? 1 : 0) - (b[0] === '' ? 1 : 0) || b[1].length - a[1].length);
+  let left = 0;
+  for (const [grp, members] of order){
+    let rest = [...members];
+    while (rest.length){
+      const cands = state.tables.map(t => {
+        const seats = seatsOf(t);
+        return {t, free:seats.filter(x => !x).length, used:seats.filter(Boolean).length, same:grp !== '' && seats.some(x => x && x.group === grp),
+          after:Math.max(0, seats.map((x, i) => x && x.group === grp ? i + 1 : 0).reduce((a, b) => Math.max(a, b), 0))};
+      }).filter(c => c.free > 0);
+      if (!cands.length) break;
+      let pick = cands.filter(c => c.same).sort((a, b) => b.free - a.free)[0];
+      if (!pick){
+        const empty = cands.filter(c => c.used === 0 && c.free >= rest.length).sort((a, b) => a.free - b.free)[0];
+        const fit = cands.filter(c => c.free >= rest.length).sort((a, b) => a.free - b.free)[0];
+        pick = empty || fit || cands.sort((a, b) => b.free - a.free)[0];
+      }
+      const before = rest.length;
+      rest = placeMany(rest, pick.t, pick.after % pick.t.seats);
+      if (rest.length === before) break;
+    }
+    left += rest.length;
+  }
+  return left;
+}
+function autoSeat(){
+  const un = state.guests.filter(g => !g.tableId).length;
+  if (!state.guests.length){ toast('Add guests first', 'warn'); return; }
+  if (!un){ toast('Everyone already has a seat', 'ok'); return; }
+  if (!state.tables.length){ toast('Add tables first', 'warn'); return; }
+  const left = commit(autoSeatCore);
+  if (left) toast(`Seated ${un - left} guests — ${left} still need a seat (add tables or seats)`, 'warn');
+  else toast(`Seated ${un} guests`, 'ok');
+}
+
+/* ================= guest import ================= */
+const HEAD = {
+  name:['name','full name','fullname','guest','guest name','guests','név','nev','vendég','vendeg','vendég neve','teljes név'],
+  first:['first','first name','firstname','given name','forename','keresztnév','keresztnev','utónév','utonev'],
+  last:['last','last name','lastname','surname','family name','vezetéknév','vezeteknev','családnév'],
+  group:['group','side','category','party','relation','relationship','household','csoport','oldal','kategória','kategoria','rokonság'],
+  diet:['diet','dietary','dietary requirements','meal','menu','food','allergy','allergies','étrend','etrend','menü','diéta','dieta'],
+  notes:['note','notes','comment','comments','remarks','megjegyzés','megjegyzes'],
+  table:['table','table name','table number','table no','asztal','asztalszám']
+};
+function decodeText(buf){
+  try { return new TextDecoder('utf-8', {fatal:true}).decode(buf); }
+  catch (e) { try { return new TextDecoder('windows-1250').decode(buf); } catch (e2) { return new TextDecoder('latin1').decode(buf); } }
+}
+function parseDelimited(text){
+  text = text.replace(/^﻿/, '');
+  const lines = text.split(/\r?\n/).filter(l => l.trim()).slice(0, 8);
+  let delim = null, best = 0;
+  for (const c of ['\t', ';', ',', '|']){
+    const n = lines.filter(l => l.includes(c)).length;
+    if (n > best){ best = n; delim = c; }
+  }
+  if (!delim) return text.split(/\r?\n/).map(l => [l]);
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if (q){
+      if (ch === '"'){ if (text[i + 1] === '"'){ cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"' && cell.trim() === '') { q = true; cell = ''; }
+    else if (ch === delim){ row.push(cell); cell = ''; }
+    else if (ch === '\n'){ row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (ch !== '\r') cell += ch;
+  }
+  if (cell !== '' || row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+function rowsToGuests(rows){
+  rows = rows.map(r => (Array.isArray(r) ? r : [r]).map(c => String(c ?? '').trim())).filter(r => r.some(Boolean));
+  if (!rows.length) return [];
+  const head = rows[0].map(h => h.toLowerCase().replace(/[_\-:*]+/g, ' ').replace(/\s+/g, ' ').trim());
+  const idx = {};
+  for (const k in HEAD) idx[k] = head.findIndex(h => HEAD[k].includes(h));
+  const hasHeader = idx.name >= 0 || idx.first >= 0 || idx.last >= 0;
+  let body = rows;
+  if (hasHeader) body = rows.slice(1);
+  else Object.assign(idx, {name:0, group:1, diet:2, notes:3, first:-1, last:-1, table:-1});
+  const huOrder = idx.last >= 0 && /vezet|család/.test(head[idx.last] || '');
+  return body.map(r => {
+    const c = i => (i >= 0 ? r[i] || '' : '');
+    let name = c(idx.name);
+    if (!name){ const f = c(idx.first), l = c(idx.last); name = (huOrder ? [l, f] : [f, l]).filter(Boolean).join(' '); }
+    return {name:name.replace(/\s+/g, ' ').trim(), group:c(idx.group), diet:c(idx.diet), notes:c(idx.notes), table:c(idx.table)};
+  }).filter(g => g.name);
+}
+function loadXLSX(){
+  if (window.XLSX) return Promise.resolve();
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = () => res(); s.onerror = () => rej(new Error('Excel support needs an internet connection. Save the sheet as CSV instead.'));
+    document.head.append(s);
+  });
+}
+async function importGuestFile(file){
+  if (!file) return;
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  let rows;
+  try {
+    if (ext === 'xlsx' || ext === 'xls' || ext === 'ods'){
+      await loadXLSX();
+      const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
+      rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:'', raw:false});
+    } else {
+      const text = decodeText(await file.arrayBuffer());
+      if (ext === 'json'){
+        const j = JSON.parse(text);
+        if (j && !Array.isArray(j) && Array.isArray(j.tables) || (j && j.state)){
+          if (confirm('This looks like a saved seating plan, not a guest list. Open it as a plan (replaces the current plan, undo is available)?')) openConfigObject(j, file.name);
+          return;
+        }
+        const arr = Array.isArray(j) ? j : (j.guests || []);
+        rows = [['name', 'group', 'diet', 'notes', 'table'], ...arr.map(g => typeof g === 'string' ? [g] : [g.name || [g.firstName || g.first, g.lastName || g.last].filter(Boolean).join(' '), g.group || g.side || '', g.diet || g.dietary || '', g.notes || '', g.table || ''])];
+      } else rows = parseDelimited(text);
+    }
+  } catch (err){ toast('Could not read file: ' + err.message, 'err'); return; }
+  const guests = rowsToGuests(rows);
+  if (!guests.length){ toast('No guest names found in that file', 'warn'); return; }
+  openImportPreview(guests, file.name);
+}
+let pendingImport = null;
+function openImportPreview(guests, source){
+  pendingImport = guests;
+  const existing = new Set(state.guests.map(g => g.name.toLowerCase()));
+  const dups = guests.filter(g => existing.has(g.name.toLowerCase())).length;
+  const hasT = guests.some(g => g.table);
+  $('#impSummary').innerHTML = `<b>${guests.length}</b> guest${guests.length > 1 ? 's' : ''} found in <i>${esc(source)}</i>.` + (dups ? ` <span style="color:var(--warn)">${dups} already on your list.</span>` : '')
+    + (hasT ? '<div class="small muted">Table column detected — guests will be seated at existing tables with a matching name or number.</div>' : '');
+  $('#impPreview').innerHTML = `<table><tr><th>Name</th><th>Group</th><th>Dietary</th><th>Notes</th>${hasT ? '<th>Table</th>' : ''}</tr>` +
+    guests.slice(0, 200).map(g => `<tr><td>${esc(g.name)}</td><td>${esc(g.group)}</td><td>${esc(g.diet)}</td><td>${esc(g.notes)}</td>${hasT ? `<td>${esc(g.table)}</td>` : ''}</tr>`).join('') +
+    (guests.length > 200 ? `<tr><td colspan="5" class="muted">…and ${guests.length - 200} more</td></tr>` : '') + '</table>';
+  $('#impSkipDup').closest('label').style.display = dups ? '' : 'none';
+  $('#dlgImport').showModal();
+}
+function matchTable(v){
+  v = String(v).trim().toLowerCase(); if (!v) return null;
+  return state.tables.find(t => t.label.toLowerCase() === v) || state.tables.find(t => t.label.toLowerCase() === 'table ' + v)
+    || (/^\d+$/.test(v) ? state.tables.find(t => (t.label.match(/\d+/) || [])[0] === String(+v)) : null);
+}
+function doImport(guests, skipDup){
+  const existing = new Set(state.guests.map(g => g.name.toLowerCase()));
+  let added = 0, skipped = 0, seated = 0;
+  commit(() => {
+    for (const g of guests){
+      const key = g.name.toLowerCase();
+      if (skipDup && existing.has(key)){ skipped++; continue; }
+      existing.add(key);
+      const ng = {id:uid(), name:g.name, group:g.group || '', diet:g.diet || '', notes:g.notes || '', tableId:null, seat:null};
+      state.guests.push(ng); added++;
+      if (g.table){ const t = matchTable(g.table); if (t && placeGuest(ng, t)) seated++; }
+    }
+  });
+  toast(`Added ${added} guest${added === 1 ? '' : 's'}` + (skipped ? `, skipped ${skipped} duplicate${skipped > 1 ? 's' : ''}` : '') + (seated ? `, ${seated} seated` : ''), 'ok');
+}
+
+/* ================= save / load / export ================= */
+function download(name, text, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type}));
+  a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function renderSaves(){
+  const el = $('#saveList');
+  let list;
+  try { list = await listSaves(); }
+  catch (e){ el.innerHTML = `<div class="small" style="color:var(--danger);padding:6px 2px">Could not load saved configurations: ${esc(e.message)}</div>`; return; }
+  el.innerHTML = list.length ? list.map(s => {
+    const n = s.name;
+    return `<div class="saverow${n === ui.saveName ? ' current' : ''}"><div><b>${esc(n)}</b>${n === ui.saveName ? ' <span class="small muted">(current)</span>' : ''}
+      <div class="small muted">${new Date(s.savedAt).toLocaleString()} · ${s.guests} guests · ${s.tables} tables</div></div>
+      <button data-load="${esc(n)}">Load</button><button class="danger" data-delsave="${esc(n)}">Delete</button></div>`;
+  }).join('') : '<div class="muted small" style="padding:6px 2px">No saved configurations yet.</div>';
+}
+async function saveAs(name){
+  name = ((name || '').trim() || state.name || 'My plan').slice(0, 120);
+  let exists;
+  try { exists = (await listSaves()).some(s => s.name === name); }
+  catch (e){ toast('Could not reach the server: ' + e.message, 'err'); return false; }
+  if (exists && name !== ui.saveName && !confirm(`A configuration called “${name}” already exists. Overwrite it?`)) return false;
+  try { await writeSave(name, JSON.parse(JSON.stringify(state))); }
+  catch (e){ toast(server.on ? 'Could not save to the server: ' + e.message : 'Browser storage is full — use “Export plan to file” instead', 'err'); return false; }
+  ui.saveName = name; ui.dirty = false; persist(); renderHeader(); renderSaves();
+  toast(`Saved “${name}”`, 'ok');
+  return true;
+}
+async function loadSave(name){
+  let s;
+  try { s = await readSave(name); }
+  catch (e){ toast('Could not load: ' + e.message, 'err'); return; }
+  if (!s) return;
+  if (ui.dirty && !confirm(`Load “${name}”?\nYour current unsaved changes will be replaced (you can still undo).`)) return;
+  ui.selected = null; ui.checked.clear();
+  commit(() => { state = normalize(JSON.parse(JSON.stringify(s.data))); });
+  ui.saveName = name; ui.dirty = false; persist(); fitView(); render(); renderSaves();
+  $('#dlgSaves').close();
+  toast(`Loaded “${name}”`, 'ok');
+}
+function openConfigObject(j, source){
+  const st = j.state || j;
+  if (!st || !Array.isArray(st.guests)){ toast('That file is not a seating plan', 'err'); return; }
+  ui.selected = null; ui.checked.clear();
+  commit(() => { state = normalize(st); });
+  ui.saveName = null; persist(); fitView(); render();
+  $('#dlgSaves').open && $('#dlgSaves').close();
+  toast(`Opened plan from ${source}`, 'ok');
+}
+function exportJson(){
+  const data = {app:'wedding-seating-planner', version:1, exportedAt:new Date().toISOString(), state};
+  download(`${slug(state.name)}-seating-plan.json`, JSON.stringify(data, null, 2), 'application/json');
+}
+function exportCsv(){
+  const q = v => { v = String(v ?? ''); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const tIdx = new Map(state.tables.map((t, i) => [t.id, i]));
+  const rows = [...state.guests].sort((a, b) => (a.tableId ? tIdx.get(a.tableId) : 1e9) - (b.tableId ? tIdx.get(b.tableId) : 1e9) || (a.seat ?? 0) - (b.seat ?? 0) || a.name.localeCompare(b.name))
+    .map(g => [g.name, g.group, g.diet, g.notes, g.tableId ? tableById(g.tableId).label : '', g.tableId ? g.seat + 1 : ''].map(q).join(','));
+  download(`${slug(state.name)}-seating.csv`, '﻿' + ['Name,Group,Dietary,Notes,Table,Seat', ...rows].join('\r\n'), 'text/csv');
+}
+function quickSave(){
+  if (ui.saveName) saveAs(ui.saveName);
+  else openSaves();
+}
+function openSaves(){
+  $('#saveName').value = ui.saveName || state.name || '';
+  renderSaves(); $('#dlgSaves').showModal();
+  setTimeout(() => $('#saveName').select(), 30);
+}
+
+/* ================= demo ================= */
+function demoState(){
+  const s = defaultState();
+  s.name = 'Anna & Daniel'; s.room = {w:26, h:17}; s.settings.maxTables = 10;
+  const groups = {
+    "Bride's family":['Eva Bennett','Peter Bennett','Clara Bennett','Rose Hall','Arthur Hall','Lily Hall','Margaret Bennett','George Bennett','Sophie Turner','Liam Turner'],
+    "Groom's family":['Helen Ward','Richard Ward','Emily Ward','James Ward','Grace Ellis','Thomas Ellis','Olivia Ward','Henry Ward'],
+    'University friends':['Mia Clarke','Noah Price','Ava Russell','Lucas Grant','Isla Morgan','Ethan Wells','Zoe Palmer','Oscar Reid'],
+    'Work':['Chloe Barker','Jack Fisher','Ruby Lane','Max Holt','Ella Shaw','Leo Day'],
+    'Childhood friends':['Hannah Cole','Sam Bishop','Nora Fox','Felix Dunn','Iris Webb']
+  };
+  const diets = {'Emily Ward':'Vegetarian','Noah Price':'Vegan','Rose Hall':'Gluten-free','Lily Hall':'Kids menu','Felix Dunn':'Nut allergy'};
+  for (const [g, names] of Object.entries(groups)) for (const n of names) s.guests.push({id:uid(), name:n, group:g, diet:diets[n] || '', notes:'', tableId:null, seat:null});
+  s.items = [
+    {id:uid(), type:'head', label:'Head table', x:13, y:1.6, w:6, h:1},
+    {id:uid(), type:'dance', label:'Dance floor', x:13, y:8.8, w:6, h:6},
+    {id:uid(), type:'stage', label:'DJ', x:13, y:15.2, w:4, h:1.6},
+    {id:uid(), type:'bar', label:'Bar', x:24.6, y:14.5, w:1.2, h:3.5},
+    {id:uid(), type:'cake', label:'Cake', x:2, y:15.4, w:1.3, h:1.3},
+    {id:uid(), type:'entrance', label:'Entrance', x:0.3, y:8.5, w:0.5, h:2.4}
+  ];
+  const pos = [[5,4.5],[5,9],[5,13.5],[21,4.5],[21,9],[21,13.5]];
+  pos.forEach(([x, y], i) => s.tables.push({id:uid(), label:'Table ' + (i + 1), x, y, seats:8, diameter:1.8}));
+  return s;
+}
+function loadDemo(){
+  if (state.guests.length && !confirm('Replace the current plan with the demo? (You can undo.)')) return;
+  ui.selected = null; ui.checked.clear();
+  commit(() => {
+    state = normalize(demoState());
+    autoSeatCore();
+    state.guests.forEach(g => { if (g.group === 'Work'){ g.tableId = null; g.seat = null; } });
+  });
+  ui.saveName = null; persist(); fitView(); render();
+  $('#dlgSaves').open && $('#dlgSaves').close();
+  toast('Demo loaded — try dragging the “Work” guests onto a table', 'ok');
+}
+
+/* ================= print ================= */
+function buildPrint(){
+  const R = state.room, color = groupColorFn();
+  const clone = svg.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.setAttribute('viewBox', `-1 -1.2 ${R.w + 2} ${R.h + 2.2}`);
+  clone.querySelectorAll('.sel,.drop').forEach(el => el.classList.remove('sel', 'drop'));
+  const tables = state.tables.map(t => {
+    const seats = seatsOf(t);
+    return `<div class="pcard"><b>${esc(t.label)}</b> <span>(${seats.filter(Boolean).length}/${t.seats})</span><ol>${seats.map(g => `<li>${g ? esc(g.name) + (g.diet ? ` <i>— ${esc(g.diet)}</i>` : '') : '<span style="color:#aaa">empty</span>'}</li>`).join('')}</ol></div>`;
+  }).join('');
+  const idx = [...state.guests].sort((a, b) => a.name.localeCompare(b.name))
+    .map(g => `<div>${esc(g.name)} — <b>${g.tableId ? esc(tableById(g.tableId).label) : 'not seated'}</b></div>`).join('');
+  $('#printView').innerHTML = `<h1>${esc(state.name)}</h1><div>${state.date ? esc(new Date(state.date + 'T00:00').toLocaleDateString()) + ' · ' : ''}${state.guests.length} guests · ${state.tables.length} tables</div>`
+    + clone.outerHTML.replace(/roomClip/g, 'roomClipPrint') + `<h2>Tables</h2><div class="pgrid">${tables}</div><h2 style="page-break-before:always">Guests A–Z</h2><div class="pindex">${idx}</div>`;
+}
+window.addEventListener('beforeprint', buildPrint);
+
+/* ================= wiring ================= */
+$('.tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b){ ui.tab = b.dataset.tab; renderHeader(); } });
+$('#weddingName').addEventListener('change', e => { const v = e.target.value.trim() || 'Our Wedding'; if (v !== state.name) commit(() => { state.name = v; }); });
+$('#weddingName').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+$('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
+$('#btnSaves').onclick = openSaves;
+$('#btnPrint').onclick = () => { buildPrint(); window.print(); };
+
+// add guest
+$('#addGuestForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#gName').value.trim(); if (!name) return;
+  const g = {id:uid(), name, group:$('#gGroup').value.trim(), diet:$('#gDiet').value.trim(), notes:'', tableId:null, seat:null};
+  if (state.guests.some(x => x.name.toLowerCase() === name.toLowerCase())) toast(`Note: “${name}” is already on the list`, 'warn');
+  commit(() => state.guests.push(g));
+  $('#gName').value = ''; $('#gDiet').value = ''; $('#gName').focus();
+});
+$('#btnPaste').onclick = () => { const b = $('#pasteBox'); b.hidden = !b.hidden; if (!b.hidden) $('#pasteText').focus(); };
+$('#btnPasteCancel').onclick = () => { $('#pasteBox').hidden = true; };
+$('#btnPasteGo').onclick = () => {
+  const guests = rowsToGuests(parseDelimited($('#pasteText').value));
+  if (!guests.length){ toast('Nothing to add', 'warn'); return; }
+  openImportPreview(guests, 'pasted text');
+};
+$('#btnImportFile').onclick = () => $('#fileGuests').click();
+$('#fileGuests').onchange = e => { importGuestFile(e.target.files[0]); e.target.value = ''; };
+$('#dlgImport form').addEventListener('submit', e => {
+  if (e.submitter?.value === 'ok' && pendingImport){
+    const list = pendingImport;
+    pendingImport = null;
+    doImport(list, $('#impSkipDup').checked && $('#impSkipDup').closest('label').style.display !== 'none');
+    $('#pasteText').value = ''; $('#pasteBox').hidden = true;
+  }
+});
+
+// filters
+$('#fSearch').addEventListener('input', e => { ui.search = e.target.value; renderGuests(); });
+$('#fGroup').addEventListener('change', e => { ui.group = e.target.value; renderGuests(); });
+$('#fStatus').addEventListener('change', e => { ui.status = e.target.value; renderGuests(); });
+$('#fSort').addEventListener('change', e => { ui.sort = e.target.value; renderGuests(); });
+$('#chkAll').addEventListener('change', e => {
+  const list = filteredGuests();
+  list.forEach(g => e.target.checked ? ui.checked.add(g.id) : ui.checked.delete(g.id));
+  renderGuests();
+});
+
+// guest list clicks
+$('#guestList').addEventListener('click', e => {
+  if (e.target.id === 'btnDemo3'){ loadDemo(); return; }
+  const row = e.target.closest('.guest'); if (!row) return;
+  const g = guestById(row.dataset.id); if (!g) return;
+  const go = e.target.closest('[data-goto]');
+  if (go){ const t = tableById(go.dataset.goto); ui.selected = {type:'table', id:t.id}; centerOn(t.x, t.y); render(); return; }
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'del'){ commit(() => { state.guests = state.guests.filter(x => x.id !== g.id); }); toast(`Removed ${g.name} (Ctrl+Z to undo)`); return; }
+  if (act === 'edit'){ openEditGuest(g); return; }
+  if (e.target.classList.contains('chk') || e.shiftKey || e.ctrlKey || e.metaKey){
+    ui.checked.has(g.id) ? ui.checked.delete(g.id) : ui.checked.add(g.id);
+    renderGuests(); return;
+  }
+});
+$('#guestList').addEventListener('dblclick', e => { const row = e.target.closest('.guest'); if (row && !e.target.closest('button,input')) openEditGuest(guestById(row.dataset.id)); });
+
+// bulk
+$('#bulkBar').addEventListener('click', e => {
+  const b = e.target.closest('[data-bulk]'); if (!b) return;
+  const ids = [...ui.checked];
+  if (b.dataset.bulk === 'clear'){ ui.checked.clear(); renderGuests(); }
+  else if (b.dataset.bulk === 'unseat') unseatGuests(ids);
+  else if (b.dataset.bulk === 'del'){
+    if (!confirm(`Delete ${ids.length} guest${ids.length > 1 ? 's' : ''}?`)) return;
+    ui.checked.clear(); commit(() => { state.guests = state.guests.filter(g => !ids.includes(g.id)); });
+  } else if (b.dataset.bulk === 'group'){
+    const v = prompt('Group name for the selected guests:', guestById(ids[0])?.group || '');
+    if (v != null) commit(() => ids.forEach(id => { const g = guestById(id); if (g) g.group = v.trim(); }));
+  }
+});
+$('#bulkBar').addEventListener('change', e => {
+  if (e.target.id !== 'bulkTable' || !e.target.value) return;
+  dropGuestsOnTable(state.guests.filter(g => ui.checked.has(g.id)).map(g => g.id), tableById(e.target.value), null);
+});
+
+// edit guest dialog
+let editingId = null;
+function openEditGuest(g){
+  if (!g) return;
+  editingId = g.id;
+  $('#eName').value = g.name; $('#eGroup').value = g.group; $('#eDiet').value = g.diet; $('#eNotes').value = g.notes;
+  $('#eTable').innerHTML = `<option value="">— Not seated —</option>` + state.tables.map(t => {
+    const f = freeCount(t), mine = g.tableId === t.id;
+    return `<option value="${t.id}"${mine ? ' selected' : ''}${!mine && f === 0 ? ' disabled' : ''}>${esc(t.label)} (${mine ? 'current' : f + ' free'})</option>`;
+  }).join('');
+  $('#dlgGuest').showModal();
+}
+$('#guestForm').addEventListener('submit', e => {
+  if (e.submitter?.value !== 'ok') return;
+  const g = guestById(editingId); editingId = null;
+  if (!g) return;
+  const name = $('#eName').value.trim() || g.name, tId = $('#eTable').value;
+  commit(() => {
+    g.name = name; g.group = $('#eGroup').value.trim(); g.diet = $('#eDiet').value.trim(); g.notes = $('#eNotes').value;
+    if ((g.tableId || '') !== tId){
+      if (!tId){ g.tableId = null; g.seat = null; }
+      else if (!placeGuest(g, tableById(tId))) toast('That table is full', 'warn');
+    }
+  });
+});
+
+// tables tab
+$('#btnAddTable').onclick = $('#btnAddTable2').onclick = $('#btnEmptyAdd').onclick = addTable;
+$('#btnDemo2').onclick = loadDemo; $('#btnDemo').onclick = loadDemo;
+$('#btnAutoArrange').onclick = autoArrange;
+$('#btnAutoSeat').onclick = autoSeat;
+$('#btnClearSeating').onclick = () => {
+  const n = state.guests.filter(g => g.tableId).length;
+  if (!n){ toast('Nobody is seated yet'); return; }
+  if (!confirm(`Unseat all ${n} guests? (You can undo.)`)) return;
+  commit(() => state.guests.forEach(g => { g.tableId = null; g.seat = null; }));
+};
+$('#tableList').addEventListener('click', e => {
+  const row = e.target.closest('.trow'); if (!row) return;
+  const t = tableById(row.dataset.id); ui.selected = {type:'table', id:t.id}; centerOn(t.x, t.y); render();
+});
+$('#tableList').addEventListener('dragover', e => { if (ui.dragIds && e.target.closest('.trow')) e.preventDefault(); });
+$('#tableList').addEventListener('drop', e => {
+  const row = e.target.closest('.trow'); if (!row || !ui.dragIds) return;
+  e.preventDefault(); dropGuestsOnTable(ui.dragIds, tableById(row.dataset.id), null);
+});
+
+// plan toolbar
+$('#addItem').innerHTML += Object.entries(ITEM_TYPES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+$('#addItem').addEventListener('change', e => { if (e.target.value) addItem(e.target.value); e.target.value = ''; });
+$('#zoomIn').onclick = () => zoomAt(0.8); $('#zoomOut').onclick = () => zoomAt(1.25); $('#zoomFit').onclick = fitView;
+document.addEventListener('change', e => { const p = e.target.dataset?.pref; if (p) setPref(p, e.target.checked); });
+
+// settings
+$('#tab-settings').addEventListener('change', e => {
+  const f = e.target.dataset.set; if (!f) return;
+  const v = e.target.value;
+  const roomField = ['roomW', 'roomH', 'shape', 'orient', 'end', 'barDepth', 'stemWidth', 'stemOffset'].includes(f);
+  let moved = 0;
+  commit(() => {
+    const S = state.settings, R = state.room;
+    switch (f){
+      case 'date': state.date = v; break;
+      case 'roomW': R.w = clamp(parseFloat(v) || R.w, 4, 200); break;
+      case 'roomH': R.h = clamp(parseFloat(v) || R.h, 4, 200); break;
+      case 'shape': R.shape = v === 'T' ? 'T' : 'rect'; break;
+      case 'end': R.t.end = v === 'round' ? 'round' : 'straight'; break;
+      case 'orient': {
+        // switching between upright (T/⊥) and sideways (⊢/⊣) rotates the room, so swap width and length
+        const wasVert = R.t.orient === 'left' || R.t.orient === 'right', isVert = v === 'left' || v === 'right';
+        if (wasVert !== isVert) [R.w, R.h] = [R.h, R.w];
+        R.t.orient = v; break;
+      }
+      case 'barDepth': case 'stemWidth': case 'stemOffset': R.t[f] = parseFloat(v) || (f === 'stemOffset' ? 0 : 1); break;
+      case 'maxTables': S.maxTables = clamp(parseInt(v) || 1, 1, 500); break;
+      case 'defaultSeats': S.defaultSeats = clamp(parseInt(v) || 8, 1, 24); break;
+      case 'tableDiameter': S.tableDiameter = clamp(parseFloat(v) || 1.8, 0.6, 5); break;
+    }
+    if (roomField){
+      if (R.shape === 'T'){ const g = roomGeom(); R.t.barDepth = fmt(g.bd); R.t.stemWidth = fmt(g.sw); R.t.stemOffset = fmt(g.off); }
+      state.tables.forEach(t => { if (clampIntoRoom(t, 'table')) moved++; });
+      state.items.forEach(i => { if (clampIntoRoom(i, 'item')) moved++; });
+    }
+  });
+  if (roomField){
+    fitView();
+    if (moved) toast(`${moved} table${moved > 1 ? 's/elements were' : ' or element was'} moved to stay inside the walls — try Tables → Auto-arrange`, 'warn');
+  }
+  if (f === 'maxTables' && state.tables.length > state.settings.maxTables) toast(`You already have ${state.tables.length} tables — more than the new maximum. Remove some to get under the limit.`, 'warn');
+});
+$('#btnApplyDefaults').onclick = () => {
+  if (!state.tables.length) return;
+  let bumped = 0;
+  commit(() => { state.tables.forEach(t => { t.seats = state.settings.defaultSeats; t.diameter = state.settings.tableDiameter; }); bumped = fixSeats(); });
+  toast(bumped ? `Applied — ${bumped} guest(s) lost their seat because tables got smaller` : 'Applied to all tables', bumped ? 'warn' : 'ok');
+};
+$('#btnDelAllGuests').onclick = () => { if (state.guests.length && confirm(`Delete all ${state.guests.length} guests?`)){ ui.checked.clear(); commit(() => { state.guests = []; }); } };
+$('#btnDelAllTables').onclick = () => { if (state.tables.length && confirm(`Delete all ${state.tables.length} tables? Guests will be unseated.`)){ ui.selected = null; commit(() => { state.tables = []; fixSeats(); }); } };
+
+// inspector
+inspector.addEventListener('change', e => {
+  const sel = ui.selected; if (!sel) return;
+  const f = e.target.dataset.f;
+  if (f){
+    const o = sel.type === 'table' ? tableById(sel.id) : itemById(sel.id); if (!o) return;
+    const v = e.target.value;
+    let bumped = 0;
+    commit(() => {
+      if (f === 'label') o.label = v.trim() || o.label;
+      else if (f === 'seats'){ o.seats = clamp(parseInt(v) || o.seats, 1, 24); bumped = fixSeats(); }
+      else if (f === 'diameter'){ o.diameter = clamp(parseFloat(v) || o.diameter, 0.6, 5); clampIntoRoom(o, 'table'); }
+      else if (f === 'w' || f === 'h'){ o[f] = clamp(parseFloat(v) || o[f], 0.2, 100); clampIntoRoom(o, 'item'); }
+      else if (f === 'type'){ const old = ITEM_TYPES[o.type]; if (o.label === old.label) o.label = ITEM_TYPES[v].label; o.type = v; }
+    });
+    if (bumped) toast(`${bumped} guest${bumped > 1 ? 's' : ''} unseated because the table got smaller`, 'warn');
+    return;
+  }
+  if (e.target.dataset.seatadd != null && e.target.value){
+    const t = tableById(sel.id), g = guestById(e.target.value), seat = +e.target.dataset.seatadd;
+    commit(() => placeGuest(g, t, seat));
+  }
+});
+inspector.addEventListener('click', e => {
+  const un = e.target.closest('[data-unseat]');
+  if (un){ unseatGuests([un.dataset.unseat]); return; }
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'close'){ ui.selected = null; render(); }
+  else if (act === 'del') deleteSelected();
+  else if (act === 'dup') duplicateSelected();
+  else if (act === 'clearseats'){ const id = ui.selected.id; commit(() => state.guests.forEach(g => { if (g.tableId === id){ g.tableId = null; g.seat = null; } })); }
+  else if (act === 'rotate'){ const it = itemById(ui.selected.id); commit(() => { [it.w, it.h] = [it.h, it.w]; clampIntoRoom(it, 'item'); }); }
+});
+inspector.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('input')) e.target.blur(); });
+
+// saves dialog
+$('#btnSaveAs').onclick = () => saveAs($('#saveName').value);
+$('#saveName').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); saveAs($('#saveName').value); } });
+$('#saveList').addEventListener('click', e => {
+  const l = e.target.closest('[data-load]'); if (l){ loadSave(l.dataset.load); return; }
+  const d = e.target.closest('[data-delsave]');
+  if (d){
+    const n = d.dataset.delsave;
+    if (!confirm(`Delete saved configuration “${n}”? This cannot be undone.`)) return;
+    removeSave(n).then(() => {
+      if (ui.saveName === n){ ui.saveName = null; ui.dirty = true; persist(); renderHeader(); }
+      renderSaves();
+    }, err => toast('Could not delete: ' + err.message, 'err'));
+  }
+});
+$('#btnExportJson').onclick = exportJson;
+$('#btnExportCsv').onclick = exportCsv;
+$('#btnImportJson').onclick = () => $('#fileConfig').click();
+$('#fileConfig').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try { openConfigObject(JSON.parse(decodeText(await f.arrayBuffer())), f.name); }
+  catch (err){ toast('Could not open file: ' + err.message, 'err'); }
+};
+$('#btnNewPlan').onclick = () => {
+  if (!confirm('Start a new empty plan? The current plan stays available via Undo and in any saved configurations.')) return;
+  ui.selected = null; ui.checked.clear();
+  commit(() => { state = defaultState(); });
+  ui.saveName = null; persist(); fitView(); render(); $('#dlgSaves').close();
+};
+$('#btnCloseSaves').onclick = () => $('#dlgSaves').close();
+
+// keyboard
+document.addEventListener('keydown', e => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) || $('dialog[open]');
+  const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  if (mod && k === 's'){ e.preventDefault(); quickSave(); return; }
+  if (typing) return;
+  if (mod && k === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  else if (mod && k === 'y'){ e.preventDefault(); redo(); }
+  else if (mod && k === 'd' && ui.selected){ e.preventDefault(); duplicateSelected(); }
+  else if ((e.key === 'Delete' || e.key === 'Backspace') && ui.selected){ e.preventDefault(); deleteSelected(); }
+  else if (e.key === 'Escape' && ui.selected){ ui.selected = null; render(); }
+  else if (ui.selected && e.key.startsWith('Arrow')){
+    e.preventDefault();
+    const o = ui.selected.type === 'table' ? tableById(ui.selected.id) : itemById(ui.selected.id);
+    const st = e.shiftKey ? 1 : 0.25;
+    commit(() => {
+      if (e.key === 'ArrowLeft') o.x -= st; if (e.key === 'ArrowRight') o.x += st;
+      if (e.key === 'ArrowUp') o.y -= st; if (e.key === 'ArrowDown') o.y += st;
+      clampIntoRoom(o, ui.selected.type);
+    });
+  }
+});
+
+/* ================= boot ================= */
+async function boot(){
+  const rec = readLocalRecord();
+  state = loadCurrent(rec) || defaultState();
+  render();
+  requestAnimationFrame(fitView);
+
+  // served by server.js? then the plan lives on the server
+  if (!/^https?:$/.test(location.protocol)) return;
+  try { const h = await api('GET', 'api/health'); if (!h || h.app !== 'wedding-planner-server') return; }
+  catch (e){ return; }
+  server.on = true;
+  $('#storageNote').innerHTML = 'Your plan is stored on the server and syncs between devices (the server also keeps hourly backups). <b>Save / Load → Export to file</b> still gives you a copy to keep.';
+  $('#savesWhere').textContent = 'Saved configurations are stored on the server, so every device sees them. Export to a file for an extra copy.';
+  try {
+    const cur = await api('GET', 'api/current');
+    const pending = rec && rec.unsynced && rec.state;
+    const same = pending && cur.state && JSON.stringify(normalize(rec.state)) === JSON.stringify(normalize(cur.state));
+    if (!cur.state){
+      // empty server: this browser's plan becomes the shared one
+      server.version = cur.version || 0; server.unsynced = true;
+      await pushCurrent();
+      toast('Connected — this plan is now stored on the server', 'ok');
+    } else if (pending && !same && rec.serverVersion === cur.version){
+      // offline edits made on top of the latest server version: just send them
+      server.version = cur.version; server.unsynced = true;
+      await pushCurrent();
+    } else if (pending && !same && !confirm('This browser has changes that never reached the server, and the server has a newer version.\n\nOK = use the server\'s version\nCancel = keep this browser\'s version and overwrite the server')){
+      server.version = cur.version; server.unsynced = true;
+      await pushCurrent();
+    } else {
+      applyRemote(cur, false);
+      requestAnimationFrame(fitView);
+    }
+  } catch (e){
+    server.offline = true;
+    toast('Server unreachable — working in this browser for now', 'warn');
+  }
+  renderHeader();
+  setInterval(pollServer, 10000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) pollServer(); });
+  // best effort: send the last edits if the tab is closed within the save delay
+  window.addEventListener('pagehide', () => {
+    if (server.unsynced && !server.busy){
+      fetch('api/current', {method:'PUT', keepalive:true, headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({baseVersion:server.version, state, saveName:ui.saveName, dirty:ui.dirty})}).catch(() => {});
+    }
+  });
+}
+boot();
+</script>
+</body>
+</html>
